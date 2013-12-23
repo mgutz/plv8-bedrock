@@ -11,12 +11,17 @@ files.
 
 ## Prerequisites
 
+### Ubuntu
+
 Tested using [pgdg apt instructions](https://wiki.postgresql.org/wiki/Apt).
 In addition to installing postgresql-9.3, install plv8 engine
 
     sudo apt-get install postgresql-9.3-plv8
 
-TODO: Make it work with OS X
+### Mac
+
+Tested with [Postgres.app](http://postgresapp.com/)
+
 
 ## Getting Started
 
