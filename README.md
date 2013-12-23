@@ -3,20 +3,20 @@
 Migration and JavaScript foundation for PostgreSQL/plv8.
 
 Bedrock is an example project that lets you code PostgreSQL
-Functions using JavaScript or CoffeeScript while using many node/npm modules.
+functions using JavaScript or CoffeeScript while using many node.js npm modules.
 [browserify](http://browserify.org/) bundles your code and dependencies into a
 self-contained bundle. The bundle is loaded into the plv8 runtime via
-[mygrate](https://github.com/mgutz/mygrate), which uses `psql` compatibel SQL
+[mygrate](https://github.com/mgutz/mygrate), which uses `psql` compatible SQL
 files.
 
 ## Prerequisites
 
 Tested using [pgdg apt instructions](https://wiki.postgresql.org/wiki/Apt).
-In addition to installing postgresql-9.3, install plv8 extension
+In addition to installing postgresql-9.3, install plv8 engine
 
     sudo apt-get install postgresql-9.3-plv8
 
-Will make it work with OS X too soon.
+TODO: Make it work with OS X
 
 ## Getting Started
 
@@ -55,10 +55,6 @@ Test it
 
     select addPerson('{ "firstName": "barney", "lastName": "rubble", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}}'::json);
 
-Edit the JavaScript source in `plv8`. Note this is outside of the migrations
-directory for easy version control. A snapshot of the source is bundled
-by each migration. In practice, you would have many `plv8-startup` migrations
-corresponding to milestones in your project.
 
 ## Workflow
 
@@ -71,8 +67,13 @@ You are assigned a task to create user authentication.
 2.  Add or update tables, functions in `up.sql`.  Add corresponding revert
     logic in `down.sql`.
 
-    For plv8 tasks. Edit JavaScript in `plv8`. Add function declarations
-    in `up-functions.sql`.
+    For plv8 tasks. Edit JavaScript in `plv8/`. Add function declarations
+    in `migrations/CURRENT/up-functions.sql`.
+
+    NOTE: The migrations directory resides outside of migrations
+    for easy version control. A snapshot of the source is bundled
+    by each migration. In practice, you would have many `plv8-startup` migrations
+    corresponding to milestones.
 
 3.  Update the database by running
 
@@ -107,7 +108,7 @@ to run.
     update `./dbconsole` script.
 
 *   Define functions by delegating the work to a function in the plv8
-    directory. This avoids the unnecessary `find_function`
+    directory. This avoids the costly `find_function`
 
         CREATE OR REPLACE FUNCTION addPerson(person JSON) RETURNS int AS $$
                 return App.example.addPerson(person);
