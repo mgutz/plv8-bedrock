@@ -27,7 +27,7 @@ Clone the project
 Install dependencies
 
     npm install mygrate@0.2.0-pre -g
-    npm install
+    npm install -d
 
 Create the database which requires a superuser with password
 
