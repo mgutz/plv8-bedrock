@@ -89,13 +89,13 @@ You are assigned a task to create user authentication.
 
 NOTE:
 
-The `minPrehookDate` property in config.js is checked to determine whether
+The `minHookDate` property in config.js is checked to determine whether
 hooks are run. The prehook in this project updates the JavaScript bundle.
 You do not want those to run for migrations that have already been applied
 to the production database.
 
-Simply set the `minPrehookDate` to a timestamp before the one you are
-coding.  Prehooks must have a timestamp *greater* than `minPrehookDate`
+Simply set the `minHookDate` to a timestamp before the one you are
+coding.  Prehooks must have a timestamp *greater* than `minHookDate`
 to run.
 
 ## Best Practices and Tips

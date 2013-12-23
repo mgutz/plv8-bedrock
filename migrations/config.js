@@ -4,7 +4,7 @@ module.exports = {
       // hooks will not run within migrations unless the migration timestamp
       // is older than this timestamp. Adjust this to be older than the last
       // production migration so hooks do not get rerun.
-      minPrehookDate: "201312220012"
+      minHookDate: "201312220012"
     },
     postgresql: {
       host: "localhost",
