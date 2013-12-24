@@ -32,7 +32,7 @@ Clone the project
 Install dependencies
 
     npm install mygrate@0.2.0-pre -g
-    npm install -d
+    npm install
 
 Create the database which requires a superuser with password
 
@@ -50,15 +50,13 @@ Test it
 
     ./dbconsole
 
-    # inside psql
-
-    # load JS bundle
+    -- load JS bundle
     select plv8_startup();
 
-    # returns Hello World! string from plv8 function
-    select hello('world');
-
-    select addPerson('{ "firstName": "barney", "lastName": "rubble", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}}'::json);
+    -- script source in plv8/app/example.coffee
+    -- function wrapper in migrations/201312220022-plv8-startup/up-functions.sql
+    select app_hello('world');
+    select app_add_person('{ "firstName": "barney", "lastName": "rubble", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}}'::json);
 
 
 ## Workflow
