@@ -1,5 +1,4 @@
 str = require('underscore.string')
-dal = require('./dal')
 HSTORE = require('pg-hstore')
 
 # create module specific logger
@@ -12,7 +11,7 @@ module.exports =
 
   # select addPerson('{ "firstName": "mario", "lastName": "gutierrez", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}}'::json);
   addPerson: (person) ->
-    id = dal.execScalar """
+    plv8._executeScalar """
       INSERT INTO people (first_name, last_name, likes, meta)
       VALUES ($1, $2, $3, $4)
       RETURNING id

@@ -96,19 +96,19 @@ hooks are run. The prehook in this project updates the JavaScript bundle.
 You do not want those to run for migrations that have already been applied
 to the production database.
 
-Simply set the `minHookDate` to a timestamp before the one you are
-coding. Migration hooks must have a folder timestamp *greater* than
-`minHookDate` to run.
+Simply set the `minHookDate` to a folder timestamp before the one you are
+coding.
 
 ## Globals
 
 These globals are added for convenience
 
-*   App - The app namespace
-*   require - Ad-hoc access to modules
+*   `App` - The app namespace
+
+*   `require` - Access modules in bundle
 
         do language plv8 $$
-            var _= require('underscore');
+            var _ = require('underscore');
             # note the app subdir uses absolute pathing
             var logger = require('/app/logger');
         $$;
@@ -117,13 +117,15 @@ These globals are added for convenience
 
 *   Change the `App` namespace in `plv8/index.js`
 
-*   Use `/app/logger` for logging
+*   Use `logger` with guards to avoid processing of arguments.
 
-        do language plv8 $$
-            var logger = require('/app/logger');
-            var log = logger.getLogger('ad-hoc', 'DEBUG');
-            if (log.isNotice) log.notice('hello');
-        $$;
+        var log = require('./logger').getLogger('person');
+
+        exports.someFunc = function() {
+            var record;
+            // ...
+            if (log.isNotice) log.notice(JSON.stringify(record));
+        };
 
 *   Quickest way to reset the dev database is `mygrate createdb`
 
@@ -131,10 +133,14 @@ These globals are added for convenience
     update `./dbconsole` script.
 
 *   Define functions by delegating the work to a function in the plv8
-    directory. This avoids the costly `find_function`
+    directory.
 
         CREATE OR REPLACE FUNCTION app_add_person(person JSON) RETURNS int AS $$
             return App.example.addPerson(person);
         $$ LANGUAGE plv8 IMMUTABLE STRICT;
+
+*   To skip minification
+
+        PLAIN=1 mygrate up
 
 

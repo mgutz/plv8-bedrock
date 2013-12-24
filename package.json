@@ -10,10 +10,10 @@
     "browserify": "~3.14.0",
     "coffeeify": "~0.5.2",
     "requireify": "git://github.com/mgutz/requireify#coffee-extension",
-    "pg": "~2.9.0"
+    "pg": "~2.9.0",
+    "uglify-js": "~2.4.8"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -7,11 +7,18 @@ set -e
 
 PATH=../../node_modules/.bin:$PATH
 
-browserify \
-    -t coffeeify --extension=".coffee"  \
-    -t requireify \
-    ../../plv8/index.js > bundle.js
-#    --bare \
+# Whether to minify
+if [ "$PLAIN" = "1" ]; then
+    browserify \
+        -t coffeeify --extension=".coffee"  \
+        -t requireify \
+        ../../plv8/index.js > bundle.js
+else
+    browserify \
+        -t coffeeify --extension=".coffee"  \
+        -t requireify \
+        ../../plv8/index.js | uglifyjs > bundle.js
+fi
 
 # Create the single file up.sql required by mygrate
 cat << EOF > up.sql
@@ -20,8 +27,6 @@ cat << EOF > up.sql
  *
  * Edit up-header.sql, up-footer.sql or up-functions.sql instead.
  */
-
 EOF
 cat up-header.sql bundle.js up-footer.sql up-functions.sql >> up.sql
 rm bundle.js
-

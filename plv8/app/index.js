@@ -1,15 +1,12 @@
+require('./plv8Fill');
+
 var hstore = require('pg-hstore');
-var dal = require('./dal');
-var log = require('./log');
+var logger = require('./logger');
 var example = require('./example');
 
 module.exports = {
   hstore: hstore,
-
-  dal: dal,
-
-  log: log,
-
+  logger: logger,
   example: example
 };
 

@@ -4,13 +4,12 @@ LogLevel =
   LOG: 20
   INFO: 30
   NOTICE: 35
-  WARN: 40
+  WARNING: 40
   ERROR: 50
-  FATAL: 60
   NONE: 1000
 
 
-level = LogLevel.WARN
+level = LogLevel.NOTICE
 
 voidfn = ->
 
@@ -75,12 +74,15 @@ class Logger
     else
       @error = voidfn
 
+    @
+
 exports.setLevel = (lvl) ->
   if isNaN(lvl)
     lvl = LogLevel[lvl] || LogLevel.NOTICE
   level = lvl
   for k, logger of cache
     logger.setLevel lvl
+  null
 
 # Gets the logger for a module named `name`
 #
