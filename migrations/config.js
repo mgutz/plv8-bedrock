@@ -1,10 +1,9 @@
 module.exports = {
   development: {
     mygrate: {
-      // hooks will not run within migrations unless the migration timestamp
-      // is older than this timestamp. Adjust this to be older than the last
-      // production migration so hooks do not get rerun.
-      minHookDate: "201312220012"
+      // hooks will not run within migrations unless the name of the folder
+      // is >= to this timestamp.
+      minHookDate: "201312220022"
     },
     postgresql: {
       host: "localhost",

@@ -9,6 +9,7 @@
     "pg-hstore": "git://github.com/tomauty/pg-hstore",
     "browserify": "~3.14.0",
     "coffeeify": "~0.5.2",
+    "requireify": "git://github.com/mgutz/requireify#coffee-extension",
     "pg": "~2.9.0"
   },
   "devDependencies": {

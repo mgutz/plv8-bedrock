@@ -2,9 +2,12 @@ str = require('underscore.string')
 dal = require('./dal')
 HSTORE = require('pg-hstore')
 
+# create module specific logger
+log = require('./logger').getLogger('example')
 
 module.exports =
   hello: (name) ->
+    log.debug("ENTER hello") if log.isDebug
     str.titleize "hello #{name}!"
 
   # select addPerson('{ "firstName": "mario", "lastName": "gutierrez", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}}'::json);

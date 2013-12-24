@@ -5,5 +5,4 @@ _.str = require('underscore.string');
 
 // INTENTIONAL global leak
 App = require('./app');
-App._require = require;
-
+App.require = require;

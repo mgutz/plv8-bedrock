@@ -58,7 +58,6 @@ Test it
     select app_hello('world');
     select app_add_person('{ "firstName": "barney", "lastName": "rubble", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}}'::json);
 
-
 ## Workflow
 
 You are assigned a task to create user authentication.
@@ -101,9 +100,30 @@ Simply set the `minHookDate` to a timestamp before the one you are
 coding. Migration hooks must have a folder timestamp *greater* than
 `minHookDate` to run.
 
+## Globals
+
+These globals are added for convenience
+
+*   App - The app namespace
+*   require - Ad-hoc access to modules
+
+        do language plv8 $$
+            var _= require('underscore');
+            # note the app subdir uses absolute pathing
+            var logger = require('/app/logger');
+        $$;
+
 ## Best Practices and Tips
 
 *   Change the `App` namespace in `plv8/index.js`
+
+*   Use `/app/logger` for logging
+
+        do language plv8 $$
+            var logger = require('/app/logger');
+            var log = logger.getLogger('ad-hoc', 'DEBUG');
+            if (log.isNotice) log.notice('hello');
+        $$;
 
 *   Quickest way to reset the dev database is `mygrate createdb`
 

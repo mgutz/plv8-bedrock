@@ -8,6 +8,10 @@
 CREATE extension if not exists plv8;
 
 CREATE OR REPLACE FUNCTION plv8_startup() RETURNS VOID AS $$
+  // resets App global context properties
+  var global = (function(){ return this; }).call(null);
+  delete global.App;
+  delete global.require;
 
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var sanitize_input = function(input) {
@@ -2034,7 +2038,7 @@ module.exports = {
 }).call(this);
 
 },{}],4:[function(require,module,exports){
-module.exports = {
+var __filename="/app/dal.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  }module.exports = {
 
   execScalar: function() {
     var result = plv8.execute.apply(null, [].slice.call(arguments, 0));
@@ -2052,9 +2056,10 @@ module.exports = {
 
   exec: plv8.execute
 };
+;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    global.require[moduleName] = module.exports;  }
 
 },{}],5:[function(require,module,exports){
-var HSTORE, dal, str;
+var __filename="/app/example.coffee";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  };var global = (function(){ return this; }).call(null);global.require['underscore.string'] = require('underscore.string');;var global = (function(){ return this; }).call(null);global.require['pg-hstore'] = require('pg-hstore');var HSTORE, dal, log, str;
 
 str = require('underscore.string');
 
@@ -2062,8 +2067,13 @@ dal = require('./dal');
 
 HSTORE = require('pg-hstore');
 
+log = require('./logger').getLogger('example');
+
 module.exports = {
   hello: function(name) {
+    if (log.isDebug) {
+      log.debug("ENTER hello");
+    }
     return str.titleize("hello " + name + "!");
   },
   addPerson: function(person) {
@@ -2072,9 +2082,10 @@ module.exports = {
   }
 };
 
+;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    global.require[moduleName] = module.exports;  }
 
-},{"./dal":4,"pg-hstore":1,"underscore.string":2}],6:[function(require,module,exports){
-var hstore = require('pg-hstore');
+},{"./dal":4,"./logger":8,"pg-hstore":1,"underscore.string":2}],6:[function(require,module,exports){
+var __filename="/app/index.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  };var global = (function(){ return this; }).call(null);global.require['pg-hstore'] = require('pg-hstore');var hstore = require('pg-hstore');
 var dal = require('./dal');
 var log = require('./log');
 var example = require('./example');
@@ -2089,26 +2100,162 @@ module.exports = {
   example: example
 };
 
+;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    global.require[moduleName] = module.exports;  }
 
 },{"./dal":4,"./example":5,"./log":7,"pg-hstore":1}],7:[function(require,module,exports){
-module.exports =  {
+var __filename="/app/log.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  }module.exports =  {
   debug: function() {
     plv8.elog.apply(null, [DEBUG1].concat([].slice.call(arguments, 0)));
   }
 };
+;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    global.require[moduleName] = module.exports;  }
 
 },{}],8:[function(require,module,exports){
-// add any libraries here that are not used by the app but may be
+var __filename="/app/logger.coffee";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  }var LogLevel, Logger, cache, level, voidfn,
+  __slice = [].slice;
+
+LogLevel = {
+  ALL: 0,
+  DEBUG: 10,
+  LOG: 20,
+  INFO: 30,
+  NOTICE: 35,
+  WARN: 40,
+  ERROR: 50,
+  FATAL: 60,
+  NONE: 1000
+};
+
+level = LogLevel.WARN;
+
+voidfn = function() {};
+
+Logger = (function() {
+  function Logger(name, lvl) {
+    this.name = name;
+    this.setLevel(lvl);
+  }
+
+  Logger.prototype.setLevel = function(lvl) {
+    if (isNaN(lvl)) {
+      lvl = LogLevel[lvl] || LogLevel.NOTICE;
+    }
+    if ((this.level != null) === lvl) {
+      return;
+    }
+    this.level = lvl;
+    this.isDebug = LogLevel.DEBUG >= lvl;
+    if (this.isDebug) {
+      this.debug = function() {
+        var args, message;
+        message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return plv8.elog.apply(plv8, [DEBUG1, "" + this.name + " " + message].concat(__slice.call(args)));
+      };
+    } else {
+      this.debug = voidfn;
+    }
+    this.isLog = LogLevel.LOG >= lvl;
+    if (this.isLog) {
+      this.log = function() {
+        var args, message;
+        message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return plv8.elog.apply(plv8, [LOG, "" + this.name + " " + message].concat(__slice.call(args)));
+      };
+    } else {
+      this.log = voidfn;
+    }
+    this.isInfo = LogLevel.INFO >= lvl;
+    if (this.isInfo) {
+      this.info = function() {
+        var args, message;
+        message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return plv8.elog.apply(plv8, [INFO, "" + this.name + " " + message].concat(__slice.call(args)));
+      };
+    } else {
+      this.info = voidfn;
+    }
+    this.isNotice = LogLevel.NOTICE >= lvl;
+    if (this.isNotice) {
+      this.notice = function() {
+        var args, message;
+        message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return plv8.elog.apply(plv8, [NOTICE, "" + this.name + " " + message].concat(__slice.call(args)));
+      };
+    } else {
+      this.notice = voidfn;
+    }
+    this.isWarning = LogLevel.WARNING >= lvl;
+    if (this.isWarning) {
+      this.warning = function() {
+        var args, message;
+        message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return plv8.elog.apply(plv8, [WARNING, "" + this.name + " " + message].concat(__slice.call(args)));
+      };
+    } else {
+      this.warning = voidfn;
+    }
+    this.isError = LogLevel.ERROR >= lvl;
+    if (this.isError) {
+      return this.error = function() {
+        var args, message;
+        message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return plv8.elog.apply(plv8, [ERROR, "" + this.name + " " + message].concat(__slice.call(args)));
+      };
+    } else {
+      return this.error = voidfn;
+    }
+  };
+
+  return Logger;
+
+})();
+
+exports.setLevel = function(lvl) {
+  var k, logger, _results;
+  if (isNaN(lvl)) {
+    lvl = LogLevel[lvl] || LogLevel.NOTICE;
+  }
+  level = lvl;
+  _results = [];
+  for (k in cache) {
+    logger = cache[k];
+    _results.push(logger.setLevel(lvl));
+  }
+  return _results;
+};
+
+exports.getLogger = function(name, lvl) {
+  var logger;
+  if (lvl == null) {
+    lvl = level;
+  }
+  logger = cache[name];
+  if (!logger) {
+    logger = new Logger(name, lvl);
+    cache[name] = logger;
+  }
+  if (logger.level !== lvl) {
+    logger.setLevel(lvl);
+  }
+  return logger;
+};
+
+cache = {};
+
+;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    global.require[moduleName] = module.exports;  }
+
+},{}],9:[function(require,module,exports){
+var __filename="/index.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  };var global = (function(){ return this; }).call(null);global.require['underscore'] = require('underscore');;var global = (function(){ return this; }).call(null);global.require['underscore.string'] = require('underscore.string');// add any libraries here that are not used by the app but may be
 // used while coding/testing
 var _ = require('underscore');
 _.str = require('underscore.string');
 
 // INTENTIONAL global leak
 App = require('./app');
-App._require = require;
+App.require = require;
+;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    global.require[moduleName] = module.exports;  }
 
-
-},{"./app":6,"underscore":3,"underscore.string":2}]},{},[8])
+},{"./app":6,"underscore":3,"underscore.string":2}]},{},[9])
 $$ LANGUAGE plv8;
 
 /* TODO: add Function declarations here */
