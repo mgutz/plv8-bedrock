@@ -6,11 +6,13 @@
   "dependencies": {
     "underscore": "~1.5.2",
     "underscore.string": "~2.3.3",
-    "pg-hstore": "git://github.com/tomauty/pg-hstore"
+    "pg-hstore": "git://github.com/tomauty/pg-hstore",
+    "pg": "~2.9.0"
   },
   "devDependencies": {
     "browserify": "~3.14.0",
-    "coffeeify": "~0.5.2"
+    "coffeeify": "~0.5.2",
+    "pg": "~2.9.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
