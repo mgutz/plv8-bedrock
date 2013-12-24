@@ -98,8 +98,8 @@ You do not want those to run for migrations that have already been applied
 to the production database.
 
 Simply set the `minHookDate` to a timestamp before the one you are
-coding.  Prehooks must have a timestamp *greater* than `minHookDate`
-to run.
+coding. Migration hooks must have a folder timestamp *greater* than
+`minHookDate` to run.
 
 ## Best Practices and Tips
 
@@ -113,8 +113,8 @@ to run.
 *   Define functions by delegating the work to a function in the plv8
     directory. This avoids the costly `find_function`
 
-        CREATE OR REPLACE FUNCTION addPerson(person JSON) RETURNS int AS $$
-                return App.example.addPerson(person);
+        CREATE OR REPLACE FUNCTION app_add_person(person JSON) RETURNS int AS $$
+            return App.example.addPerson(person);
         $$ LANGUAGE plv8 IMMUTABLE STRICT;
 
 
