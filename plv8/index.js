@@ -5,4 +5,5 @@ _.str = require('underscore.string');
 
 // INTENTIONAL global leak
 App = require('./app');
+console = require('./plv8-console');
 

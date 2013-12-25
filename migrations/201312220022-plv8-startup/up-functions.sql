@@ -6,6 +6,6 @@ $$ LANGUAGE plv8 IMMUTABLE STRICT;
 
 CREATE OR REPLACE FUNCTION app_add_person(person JSON) RETURNS int AS $$
   return App.example.addPerson(person);
-$$ LANGUAGE plv8 IMMUTABLE STRICT;
+$$ LANGUAGE plv8;
 
 

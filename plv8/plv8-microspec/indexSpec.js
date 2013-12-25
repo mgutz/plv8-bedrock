@@ -1,32 +1,73 @@
 var assert = require('assert');
+var describe = require('../plv8-microspec');
 
-exports.microspec = function(o) {
-  var ran = 0;
+var ran = 0;
+describe('microspec', {
 
-  o.before(function() {
+  before: function() {
     ran++;
-  });
+  },
 
-  o.it('should pass', function() {
+  'should pass': function() {
     assert.ok(true);
     ran++;
-  });
+  },
 
-  o._it('should have pending', function() {
-    // this should not run
+  '_should be pending': function() {
+    // should not run
     ran++;
-  });
+  },
 
-  o.it('should catch global var leak', function() {
+  '#should be ignored': function() {
+    // should not run
+    ran++;
+  },
+
+  'should catch global var leak': function() {
     badvar = 100;
     ran++;
-  });
+  },
 
-  o.after(function() {
-    ran++;
-  });
-
-  o.it('should have run', function() {
+  after: function() {
     assert.ok(ran === 4);
-  });
-};
+  },
+
+  'should have run': function() {
+    ran++;
+  }
+});
+
+ran = 0;
+describe('microspec - subset marked with "+"', {
+  before: function() {
+    ran++;
+  },
+
+  '+should pass': function() {
+    assert.ok(true);
+    ran++;
+  },
+
+  '_should be pending': function() {
+    // should not run
+    ran++;
+  },
+
+  '#should be ignored': function() {
+    // should not run
+    ran++;
+  },
+
+  '+should catch global var leak': function() {
+    badvar = 100;
+    ran++;
+  },
+
+  after: function() {
+    assert.ok(ran === 3);
+  },
+
+  'should have run': function() {
+    ran++;
+  }
+});

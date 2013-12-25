@@ -1,4 +1,3 @@
-var log = require('../plv8-logger').getLogger('', 'LOG');
 var globals = [
     'DEBUG5',
     'DEBUG4',
@@ -14,72 +13,89 @@ var globals = [
     'plv8'
 ];
 
-var Spec = function(name) {
-  this.name = name;
-  this.ran = 0;
-  this.pending = 0;
-  log.log(name);
-};
-
-function runSpec(name, callable) {
-  var spec = new Spec(name);
-  callable(spec);
-  spec.checkGlobals();
-  spec.summary();
-};
-
-Spec.prototype.it = function(name, callable) {
-  log.log("  - " + name);
-  callable();
-  this.ran += 1;
-};
-
-Spec.prototype._it = function(name, callable) {
-  log.log("  - (PENDING) " + name);
-  this.pending += 1;
-};
-
-Spec.prototype.before = function(callable) {
-  callable();
-};
-
-Spec.prototype.after = function(callable) {
-  callable();
-};
-
-Spec.prototype.summary = function() {
-  log.log('  ran ' + this.ran + ' specs (' + this.pending + ' pending)');
-};
-
-Spec.prototype.checkGlobals = function() {
+function checkGlobals(moreGlobals) {
   var global = (function(){ return this; }).call(null);
+  var allGlobals = globals.concat(moreGlobals);
+  var summary = [];
   Object.keys(global).forEach(function(p) {
-    if (globals.indexOf(p) < 0) {
-      log.log('');
-      log.warn('!!! Global variable leak: ' + p);
+    if (allGlobals.indexOf(p) < 0) {
+      summary.push('!!! Global variable leak: ' + p);
     }
   });
+  return summary;
 };
 
-exports.addGlobals = function(arr) {
+var IGNORE = '#';
+var PENDING = '_';
+var ONLY = '+';
+
+module.exports = function(group, opts, tests) {
+  var name, fn, total, only;
+
+  if (arguments.length === 2) {
+    tests = opts;
+    opts = {};
+  }
+
+  var before, after;
+  var subset = [];
+  var set = [];
+  for (name in tests) {
+    fn = tests[name];
+    if (name === 'before') {
+      before = fn;
+    } else if (name === 'after') {
+      after = fn;
+    } else if (name[0] === ONLY) {
+      subset.push({name: name, fn: tests[name]});
+    } else if (name[0] === IGNORE) {
+      continue;
+    } else {
+      set.push({name: name, fn: tests[name]});
+    }
+  }
+
+  var ran = 0, pending = 0;
+
+  if (subset.length > 0) set = subset;
+
+  var summary = ['', group];
+  try {
+    if (before) before();
+    var i, test;
+    for (i = 0; i < set.length; i++) {
+      test = set[i];
+      name = test.name;
+      fn = test.fn;
+      if (name[0] === PENDING) {
+        summary.push('  - (PENDING) ' + name.slice(1));
+        pending += 1;
+      } else if (name[0] === ONLY) {
+        summary.push('  - ' + name.slice(1));
+        fn();
+        ran += 1;
+      } else {
+        summary.push('  - ' + name);
+        fn();
+        ran += 1;
+      }
+    }
+    if (after) after();
+
+    var message = '  ran ' + ran + ' specs';
+    if (pending > 0) message += ' (' + pending + ' pending)';
+    summary.push(message);
+    summary = summary.concat(checkGlobals(opts.globals));
+  } catch(e) {
+    summary.push('!!! ', e.toString());
+    summary.push('!!! ', e.stack);
+  }
+
+  console.log(summary.join('\n'));
+};
+
+
+module.exports.addGlobals = function(arr) {
   globals = globals.concat(arr);
 };
 
-exports.run = function(modules) {
-  if (!Array.isArray(modules)) modules = [modules];
-
-  log.log('BEGIN microspec');
-  log.log('');
-  modules.forEach(function(mod) {
-    for (var name in mod) {
-      try {
-        runSpec(name, mod[name]);
-
-      } catch (e) {
-        log.warn('!!! ', e.toString());
-      }
-    }
-  });
-  log.log('');
-  log.log('END microspec');
-};

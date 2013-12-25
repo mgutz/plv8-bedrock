@@ -91,7 +91,8 @@ For new tasks
 
         mygrate last
 
-4.  Run unit tests
+4.  Run unit tests. See `plv8/test/index.js` and `plv8/test/exampleSpec.js`
+    which uses the minimal `plv8-microspec` test library.
 
         mygrate migrations/test.sql
 
@@ -110,19 +111,6 @@ Simply set the `minHookDate` to a folder timestamp before the one you are
 coding.
 
 
-## Unit Testing
-
-`plv8-microspec` is included as a minimal test library.
-See `plv8/test/index.js` for an example test suite.
-
-To run tests
-
-*   From psql
-
-        mygrate file migrations/test.sql
-
-*   From pgadmin3, execute the script `migrations/test.sql`
-
 ## Globals
 
 These globals are added for convenience
@@ -136,6 +124,8 @@ These globals are added for convenience
             # note local folders start with '/'
             var logger = require('/app/logger');
         $$;
+
+*   `console` - Console.
 
 ## Best Practices and Tips
 
