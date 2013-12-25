@@ -3,6 +3,7 @@ var __slice = [].slice;
 var cache = {};
 
 var LogLevel = {
+  DEBUG1: 9,
   DEBUG: 10,
   LOG: 20,
   INFO: 30,
@@ -14,7 +15,7 @@ var LogLevel = {
 
 var _level = 'NOTICE';
 
-function voidfn(){};
+function noop(){};
 
 function Logger(name, level) {
   this.name = name;
@@ -41,7 +42,7 @@ Logger.prototype.setLevel = function(level) {
       return plv8.elog.apply(plv8, [DEBUG1, this.name + " " + message].concat(__slice.call(args)));
     };
   } else {
-    this.debug = voidfn;
+    this.debug = noop;
   }
 
   this.isLog = LogLevel.LOG >= levelNum;
@@ -52,7 +53,7 @@ Logger.prototype.setLevel = function(level) {
       return plv8.elog.apply(plv8, [LOG, this.name + " " + message].concat(__slice.call(args)));
     };
   } else {
-    this.log = voidfn;
+    this.log = noop;
   }
 
   this.isInfo = LogLevel.INFO >= levelNum;
@@ -63,7 +64,7 @@ Logger.prototype.setLevel = function(level) {
       return plv8.elog.apply(plv8, [INFO, this.name + " " + message].concat(__slice.call(args)));
     };
   } else {
-    this.info = voidfn;
+    this.info = noop;
   }
 
   this.isNotice = LogLevel.NOTICE >= levelNum;
@@ -74,7 +75,7 @@ Logger.prototype.setLevel = function(level) {
       return plv8.elog.apply(plv8, [NOTICE, this.name + " " + message].concat(__slice.call(args)));
     };
   } else {
-    this.notice = voidfn;
+    this.notice = noop;
   }
 
   this.isWarn = LogLevel.WARN >= levelNum;
@@ -85,7 +86,7 @@ Logger.prototype.setLevel = function(level) {
       return plv8.elog.apply(plv8, [WARNING, this.name + " " + message].concat(__slice.call(args)));
     };
   } else {
-    this.warn = voidfn;
+    this.warn = noop;
   }
 
   this.isError = LogLevel.ERROR >= levelNum;
@@ -96,7 +97,7 @@ Logger.prototype.setLevel = function(level) {
       return plv8.elog.apply(plv8, [ERROR, this.name + " " + message].concat(__slice.call(args)));
     };
   } else {
-    this.error = voidfn;
+    this.error = noop;
   }
   return this;
 };

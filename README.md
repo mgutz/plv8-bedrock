@@ -46,7 +46,7 @@ View migrations history
 
     mygrate
 
-Test it
+Test it interactively
 
     ./dbconsole
 
@@ -58,36 +58,46 @@ Test it
     select app_hello('world');
     select app_add_person('{ "firstName": "barney", "lastName": "rubble", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}}'::json);
 
+Or, run tests
+
+    npm test
+
 ## Workflow
 
-You are assigned a task to create user authentication.
+For new tasks
 
-1.  First create a migration
+1.  Create a migration
 
         mygrate new user-auth
+
+    To create a plv8 migration, you have to manually copy
+    `migrations/*-plv8-startup` for now and change the timestamp.
 
 2.  Add or update tables, functions in `up.sql`.  Add corresponding revert
     logic in `down.sql`.
 
-    For plv8 tasks. Edit JavaScript in `plv8/`. Add function declarations
+    For plv8 tasks, edit JavaScript in `plv8/`. Add function declarations
     in `migrations/CURRENT/up-functions.sql`.
 
-    NOTE: The migrations directory resides outside of migrations
+    NOTE: The plv8 directory resides outside of migrations
     for easy version control. A snapshot of the source is bundled
     by each migration. In practice, you would have many `plv8-startup` migrations
     corresponding to milestones.
 
-3.  Update the database by running
+3.  To update the database and mygrate down/up your last migration created
+    above
 
-        mygrate up
+        mygrate last
 
-    If there are errors, fix errors and rerun.
+4.  Run unit tests
 
-4.  Let's say you need to edit the script. Undo the migration, make changes,
-    then update it again
+        mygrate migrations/test.sql
 
-        mygrate down    # undoes last migration
-        mygrate up      # run migration again
+Repeat steps 2 and 3, 4 as needed
+
+Tip: steps 3 and 4 can also be peformed by running
+
+    npm test
 
 NOTE:
 
@@ -102,15 +112,16 @@ coding.
 
 ## Unit Testing
 
-`plv8-microspec` is the included minimal test library. See `plv8/test/index.js`
+`plv8-microspec` is included as a minimal test library.
+See `plv8/test/index.js` for an example test suite.
 
-To run
+To run tests
 
-    ./dbconsole
+*   From psql
 
-    set client_min_messages = DEBUG1;
-    select plv8_startup();
-    do language plv8 'require("/test").run()';
+        mygrate file migrations/test.sql
+
+*   From pgadmin3, execute the script `migrations/test.sql`
 
 ## Globals
 

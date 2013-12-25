@@ -1,5 +1,3 @@
-var ran = 0;
-var pending = 0;
 var log = require('../plv8-logger').getLogger('', 'LOG');
 var globals = [
     'DEBUG5',
@@ -38,7 +36,7 @@ Spec.prototype.it = function(name, callable) {
 
 Spec.prototype._it = function(name, callable) {
   log.log("  - (PENDING) " + name);
-  this.pending = pending+1;
+  this.pending += 1;
 };
 
 Spec.prototype.before = function(callable) {
@@ -73,9 +71,7 @@ exports.run = function(modules) {
   log.log('BEGIN microspec');
   log.log('');
   modules.forEach(function(mod) {
-    var name, callable;
-    for (name in mod) {
-      callable = mod[name];
+    for (var name in mod) {
       try {
         runSpec(name, mod[name]);
 
