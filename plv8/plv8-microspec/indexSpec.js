@@ -18,7 +18,6 @@ exports.microspec = function(o) {
   });
 
   o.it('should catch global var leak', function() {
-    // this should not run
     badvar = 100;
     ran++;
   });
