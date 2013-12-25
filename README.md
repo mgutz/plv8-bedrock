@@ -11,6 +11,8 @@ files.
 
 ## Prerequisites
 
+Requires [node.js](http://nodejs.org) and `psql` cli utility
+
 ### Ubuntu
 
 Tested using [pgdg apt instructions](https://wiki.postgresql.org/wiki/Apt).
@@ -93,9 +95,7 @@ For new tasks
 
         mygrate migrations/test.sql
 
-Repeat steps 2 and 3, 4 as needed
-
-Tip: steps 3 and 4 can also be peformed by running
+Repeat steps 2, 3 and 4 as needed. A simpler way to edit and test is
 
     npm test
 
