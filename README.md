@@ -50,7 +50,8 @@ View migrations history
 
 Test it interactively
 
-    ./dbconsole
+    # start psql
+    mygrate console
 
     -- load JS bundle
     select plv8_startup();
@@ -142,9 +143,6 @@ These globals are added for convenience
         };
 
 *   Quickest way to reset the dev database is `mygrate createdb`
-
-*   If config.js database settings are changed, run `mygrate console` to
-    update `./dbconsole` script.
 
 *   Define functions by delegating the work to a function in the plv8
     directory.

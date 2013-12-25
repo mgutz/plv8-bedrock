@@ -1,2 +1,0 @@
-#!/bin/sh
-PGPASSWORD="dev" psql -U plv8_bedrock_dev_user -d plv8_bedrock_dev -h localhost -p 5432
