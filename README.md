@@ -108,7 +108,7 @@ To run
 
     ./dbconsole
 
-    set client_min_messges = DEBUG1;
+    set client_min_messages = DEBUG1;
     select plv8_startup();
     do language plv8 'require("/test").run()';
 
