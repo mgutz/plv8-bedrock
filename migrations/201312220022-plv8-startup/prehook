@@ -7,6 +7,7 @@ set -e
 
 PATH=../../node_modules/.bin:$PATH
 
+        #--insert-global-vars __filename,__dirname,global \
 # Whether to minify
 if [ "$MINIFY" = "1" ]; then
     browserify \

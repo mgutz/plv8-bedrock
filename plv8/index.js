@@ -1,9 +1,9 @@
 // add any libraries here that are not used by the app but may be
-// used while coding/testing
+// used interactively in psql/pgadmin3
 var _ = require('underscore');
 _.str = require('underscore.string');
 
 // INTENTIONAL global leak
-App = require('./app');
 console = require('./plv8-console');
+App = require('./app');
 
