@@ -34,71 +34,38 @@ Logger.prototype.setLevel = function(level) {
     levelNum = LogLevel[_level];
   }
 
-  this.isDebug = LogLevel.DEBUG >= levelNum;
-  if (this.isDebug) {
-    this.debug = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [DEBUG1, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.debug = noop;
+  var self = this;
+
+  function makeFunc(flag, method, logLevel, pgLEVEL) {
+    self[flag] = logLevel >= levelNum;
+    if (flag) {
+      self[method] = function() {
+        var args, message;
+        message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return plv8.elog.apply(plv8, [pgLEVEL, self.name + " " + message].concat(__slice.call(args)));
+      };
+    } else {
+      self[method] = noop;
+    }
   }
 
-  this.isLog = LogLevel.LOG >= levelNum;
-  if (this.isLog) {
-    this.log = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [LOG, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.log = noop;
-  }
+  // this.isDebug = LogLevel.DEBUG >= levelNum;
+  // if (this.isDebug) {
+  //   this.debug = function() {
+  //     var args, message;
+  //     message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+  //     return plv8.elog.apply(plv8, [DEBUG1, this.name + " " + message].concat(__slice.call(args)));
+  //   };
+  // } else {
+  //   this.debug = noop;
+  // }
 
-  this.isInfo = LogLevel.INFO >= levelNum;
-  if (this.isInfo) {
-    this.info = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [INFO, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.info = noop;
-  }
-
-  this.isNotice = LogLevel.NOTICE >= levelNum;
-  if (this.isNotice) {
-    this.notice = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [NOTICE, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.notice = noop;
-  }
-
-  this.isWarn = LogLevel.WARN >= levelNum;
-  if (this.isWarn) {
-    this.warn = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [WARNING, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.warn = noop;
-  }
-
-  this.isError = LogLevel.ERROR >= levelNum;
-  if (this.isError) {
-    this.error = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [ERROR, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.error = noop;
-  }
+  makeFunc("isDebug", "debug", LogLevel.DEBUG, DEBUG1);
+  makeFunc("isLog", "log", LogLevel.LOG, LOG);
+  makeFunc("isInfo", "info", LogLevel.INFO, INFO);
+  makeFunc("isNotice", "notice", LogLevel.NOTICE, NOTICE);
+  makeFunc("isWarn", "warn", LogLevel.WARN, WARNING);
+  makeFunc("isError", "error", LogLevel.ERROR, ERROR);
   return this;
 };
 

@@ -17,9 +17,5 @@ spec('addPerson', {
   'should return id': function() {
     var id = example.addPerson({ "firstName": "mario", "lastName": "gutierrez", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}});
     assert.ok(id > 0);
-  },
-
-  'should fail': function() {
-    assert.ok(false);
   }
 });

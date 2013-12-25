@@ -40,18 +40,22 @@ module.exports = function(group, opts, tests) {
   var before, after;
   var subset = [];
   var set = [];
-  for (name in tests) {
-    fn = tests[name];
-    if (name === 'before') {
-      before = fn;
-    } else if (name === 'after') {
-      after = fn;
-    } else if (name[0] === ONLY) {
-      subset.push({name: name, fn: tests[name]});
-    } else if (name[0] === IGNORE) {
-      continue;
-    } else {
-      set.push({name: name, fn: tests[name]});
+  if (typeof tests === 'function') {
+    set.push({name: '(anonymous)', fn: tests});
+  } else {
+    for (name in tests) {
+      fn = tests[name];
+      if (name === 'before') {
+        before = fn;
+      } else if (name === 'after') {
+        after = fn;
+      } else if (name[0] === ONLY) {
+        subset.push({name: name, fn: tests[name]});
+      } else if (name[0] === IGNORE) {
+        continue;
+      } else {
+        set.push({name: name, fn: tests[name]});
+      }
     }
   }
 

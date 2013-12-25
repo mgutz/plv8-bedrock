@@ -3213,13 +3213,17 @@ module.exports.Console = Console;
 },{"__browserify_process":3,"assert":1,"util":5}],13:[function(require,module,exports){
 var process=require("__browserify_process"),__filename="/plv8-console/index.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  }process.stdout = {
   write: function() {
-    plv8.elog.apply(plv8, [LOG].concat([].slice.call(arguments, 0)));
+    var args = [].slice.call(arguments, 0);
+    args.unshift(LOG);
+    plv8.elog.apply(plv8, args);
   }
 };
 
 process.stderr = {
   write: function() {
-    plv8.elog.apply(plv8, [WARNING].concat([].slice.call(arguments, 0)));
+    var args = [].slice.call(arguments, 0);
+    args.unshift(WARNING);
+    plv8.elog.apply(plv8, args);
   }
 };
 
@@ -3289,71 +3293,38 @@ Logger.prototype.setLevel = function(level) {
     levelNum = LogLevel[_level];
   }
 
-  this.isDebug = LogLevel.DEBUG >= levelNum;
-  if (this.isDebug) {
-    this.debug = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [DEBUG1, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.debug = noop;
+  var self = this;
+
+  function makeFunc(flag, method, logLevel, pgLEVEL) {
+    self[flag] = logLevel >= levelNum;
+    if (flag) {
+      self[method] = function() {
+        var args, message;
+        message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return plv8.elog.apply(plv8, [pgLEVEL, self.name + " " + message].concat(__slice.call(args)));
+      };
+    } else {
+      self[method] = noop;
+    }
   }
 
-  this.isLog = LogLevel.LOG >= levelNum;
-  if (this.isLog) {
-    this.log = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [LOG, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.log = noop;
-  }
+  // this.isDebug = LogLevel.DEBUG >= levelNum;
+  // if (this.isDebug) {
+  //   this.debug = function() {
+  //     var args, message;
+  //     message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+  //     return plv8.elog.apply(plv8, [DEBUG1, this.name + " " + message].concat(__slice.call(args)));
+  //   };
+  // } else {
+  //   this.debug = noop;
+  // }
 
-  this.isInfo = LogLevel.INFO >= levelNum;
-  if (this.isInfo) {
-    this.info = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [INFO, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.info = noop;
-  }
-
-  this.isNotice = LogLevel.NOTICE >= levelNum;
-  if (this.isNotice) {
-    this.notice = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [NOTICE, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.notice = noop;
-  }
-
-  this.isWarn = LogLevel.WARN >= levelNum;
-  if (this.isWarn) {
-    this.warn = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [WARNING, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.warn = noop;
-  }
-
-  this.isError = LogLevel.ERROR >= levelNum;
-  if (this.isError) {
-    this.error = function() {
-      var args, message;
-      message = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-      return plv8.elog.apply(plv8, [ERROR, this.name + " " + message].concat(__slice.call(args)));
-    };
-  } else {
-    this.error = noop;
-  }
+  makeFunc("isDebug", "debug", LogLevel.DEBUG, DEBUG1);
+  makeFunc("isLog", "log", LogLevel.LOG, LOG);
+  makeFunc("isInfo", "info", LogLevel.INFO, INFO);
+  makeFunc("isNotice", "notice", LogLevel.NOTICE, NOTICE);
+  makeFunc("isWarn", "warn", LogLevel.WARN, WARNING);
+  makeFunc("isError", "error", LogLevel.ERROR, ERROR);
   return this;
 };
 
@@ -3435,18 +3406,22 @@ module.exports = function(group, opts, tests) {
   var before, after;
   var subset = [];
   var set = [];
-  for (name in tests) {
-    fn = tests[name];
-    if (name === 'before') {
-      before = fn;
-    } else if (name === 'after') {
-      after = fn;
-    } else if (name[0] === ONLY) {
-      subset.push({name: name, fn: tests[name]});
-    } else if (name[0] === IGNORE) {
-      continue;
-    } else {
-      set.push({name: name, fn: tests[name]});
+  if (typeof tests === 'function') {
+    set.push({name: '(anonymous)', fn: tests});
+  } else {
+    for (name in tests) {
+      fn = tests[name];
+      if (name === 'before') {
+        before = fn;
+      } else if (name === 'after') {
+        after = fn;
+      } else if (name[0] === ONLY) {
+        subset.push({name: name, fn: tests[name]});
+      } else if (name[0] === IGNORE) {
+        continue;
+      } else {
+        set.push({name: name, fn: tests[name]});
+      }
     }
   }
 
@@ -3497,82 +3472,6 @@ module.exports.addGlobals = function(arr) {
 ;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    if (moduleName.match(/\/index$/)) {      moduleName = (moduleName.length === 6)        ? '/' : moduleName.slice(0, -6);    }    global.require[moduleName] = module.exports;  }
 
 },{}],17:[function(require,module,exports){
-var __filename="/plv8-microspec/indexSpec.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  };var global = (function(){ return this; }).call(null);global.require['assert'] = require('assert');var assert = require('assert');
-var describe = require('../plv8-microspec');
-
-var ran = 0;
-describe('microspec', {
-
-  before: function() {
-    ran++;
-  },
-
-  'should pass': function() {
-    assert.ok(true);
-    ran++;
-  },
-
-  '_should be pending': function() {
-    // should not run
-    ran++;
-  },
-
-  '#should be ignored': function() {
-    // should not run
-    ran++;
-  },
-
-  'should catch global var leak': function() {
-    badvar = 100;
-    ran++;
-  },
-
-  after: function() {
-    assert.ok(ran === 4);
-  },
-
-  'should have run': function() {
-    ran++;
-  }
-});
-
-ran = 0;
-describe('microspec - subset marked with "+"', {
-  before: function() {
-    ran++;
-  },
-
-  '+should pass': function() {
-    assert.ok(true);
-    ran++;
-  },
-
-  '_should be pending': function() {
-    // should not run
-    ran++;
-  },
-
-  '#should be ignored': function() {
-    // should not run
-    ran++;
-  },
-
-  '+should catch global var leak': function() {
-    badvar = 100;
-    ran++;
-  },
-
-  after: function() {
-    assert.ok(ran === 3);
-  },
-
-  'should have run': function() {
-    ran++;
-  }
-});
-;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    if (moduleName.match(/\/index$/)) {      moduleName = (moduleName.length === 6)        ? '/' : moduleName.slice(0, -6);    }    global.require[moduleName] = module.exports;  }
-
-},{"../plv8-microspec":16,"assert":1}],18:[function(require,module,exports){
 var __filename="/test/exampleSpec.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  };var global = (function(){ return this; }).call(null);global.require['assert'] = require('assert');var assert = require('assert');
 var example = require('../app/example');
 var spec = require('../plv8-microspec');
@@ -3592,25 +3491,21 @@ spec('addPerson', {
   'should return id': function() {
     var id = example.addPerson({ "firstName": "mario", "lastName": "gutierrez", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}});
     assert.ok(id > 0);
-  },
-
-  'should fail': function() {
-    assert.ok(false);
   }
 });
 ;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    if (moduleName.match(/\/index$/)) {      moduleName = (moduleName.length === 6)        ? '/' : moduleName.slice(0, -6);    }    global.require[moduleName] = module.exports;  }
 
-},{"../app/example":9,"../plv8-microspec":16,"assert":1}],19:[function(require,module,exports){
+},{"../app/example":9,"../plv8-microspec":16,"assert":1}],18:[function(require,module,exports){
 var __filename="/test/index.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  }var microspec = require('../plv8-microspec');
 
 exports.run = function() {
   microspec.addGlobals(['require', 'App', 'console']);
-  require('../plv8-microspec/indexSpec');
+  //require('../plv8-microspec/indexSpec');
   require('./exampleSpec');
 };
 ;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    if (moduleName.match(/\/index$/)) {      moduleName = (moduleName.length === 6)        ? '/' : moduleName.slice(0, -6);    }    global.require[moduleName] = module.exports;  }
 
-},{"../plv8-microspec":16,"../plv8-microspec/indexSpec":17,"./exampleSpec":18}]},{},[11,19])
+},{"../plv8-microspec":16,"./exampleSpec":17}]},{},[11,18])
 $$ LANGUAGE plv8;
 
 /* TODO: add Function declarations here */
