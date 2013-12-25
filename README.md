@@ -99,6 +99,19 @@ to the production database.
 Simply set the `minHookDate` to a folder timestamp before the one you are
 coding.
 
+
+## Unit Testing
+
+`plv8-microspec` is the included minimal test library. See `plv8/test/index.js`
+
+To run
+
+    ./dbconsole
+
+    set client_min_messges = DEBUG1;
+    select plv8_startup();
+    do language plv8 'require("/test").run()';
+
 ## Globals
 
 These globals are added for convenience
@@ -109,7 +122,7 @@ These globals are added for convenience
 
         do language plv8 $$
             var _ = require('underscore');
-            # note the app subdir uses absolute pathing
+            # note local folders start with '/'
             var logger = require('/app/logger');
         $$;
 
@@ -119,7 +132,7 @@ These globals are added for convenience
 
 *   Use `logger` with guards to avoid processing of arguments.
 
-        var log = require('./logger').getLogger('person');
+        var log = require('/plv8-logger').getLogger('person');
 
         exports.someFunc = function() {
             var record;
@@ -139,8 +152,7 @@ These globals are added for convenience
             return App.example.addPerson(person);
         $$ LANGUAGE plv8 IMMUTABLE STRICT;
 
-*   To skip minification
+*   To minify
 
-        PLAIN=1 mygrate up
-
+        MINIFY=1 mygrate up
 

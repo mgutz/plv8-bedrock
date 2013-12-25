@@ -8,16 +8,16 @@ set -e
 PATH=../../node_modules/.bin:$PATH
 
 # Whether to minify
-if [ "$PLAIN" = "1" ]; then
+if [ "$MINIFY" = "1" ]; then
     browserify \
         -t coffeeify --extension=".coffee"  \
         -t requireify \
-        ../../plv8/index.js > bundle.js
+        ../../plv8/index.js ../../plv8/test/index.js | uglifyjs > bundle.js
 else
     browserify \
         -t coffeeify --extension=".coffee"  \
         -t requireify \
-        ../../plv8/index.js | uglifyjs > bundle.js
+        ../../plv8/index.js ../../plv8/test/index.js > bundle.js
 fi
 
 # Create the single file up.sql required by mygrate

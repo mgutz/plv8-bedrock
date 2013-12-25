@@ -9,9 +9,10 @@
     "pg-hstore": "git://github.com/tomauty/pg-hstore",
     "browserify": "~3.14.0",
     "coffeeify": "~0.5.2",
-    "requireify": "git://github.com/mgutz/requireify#coffee-extension",
+    "requireify": "git://github.com/mgutz/requireify#omit-index-name",
     "pg": "~2.9.0",
-    "uglify-js": "~2.4.8"
+    "uglify-js": "~2.4.8",
+    "proclaim": "~2.0.0"
   },
   "devDependencies": {},
   "scripts": {
