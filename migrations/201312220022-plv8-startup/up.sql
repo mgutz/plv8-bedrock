@@ -3530,7 +3530,7 @@ function checkGlobals(moreGlobals) {
   var summary = [];
   Object.keys(global).forEach(function(p) {
     if (allGlobals.indexOf(p) < 0) {
-      summary.push('!!! Global variable leak: ' + p);
+      summary.push(p);
     }
   });
   return summary;
@@ -3605,13 +3605,19 @@ module.exports = function(group, opts, tests) {
     message = '  ran ' + ran + ' specs';
     if (pending > 0) message += ' (' + pending + ' pending)';
     summary.push(message);
-    summary = summary.concat(checkGlobals(opts.globals));
+
+    var leaks = checkGlobals(opts.globals);
+    if (leaks.length > 0) {
+      leaks = '\nGlobal variable leaks: ' + leaks.join(', ');
+      summary.push(options.colorful ? failColor(leaks) : leaks);
+    }
   } catch(e) {
     if (e.stack) {
       message = e.stack;
     } else {
       message = e.message;
     }
+    message = '\n' + message;
 
     if (options.colorful) {
       var last = summary[summary.length - 1];

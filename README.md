@@ -126,21 +126,11 @@ These globals are added for convenience
             var logger = require('/app/logger');
         $$;
 
-*   `console` - Console.
+*   `console` - node.js console
 
 ## Best Practices and Tips
 
 *   Change the `App` namespace in `plv8/index.js`
-
-*   Use `logger` with guards to avoid processing of arguments.
-
-        var log = require('/plv8-logger').getLogger('person');
-
-        exports.someFunc = function() {
-            var record;
-            // ...
-            if (log.isNotice) log.notice(JSON.stringify(record));
-        };
 
 *   Quickest way to reset the dev database is `mygrate createdb`
 
@@ -153,7 +143,7 @@ These globals are added for convenience
 
 *   To minify
 
-        MINIFY=1 mygrate up
+        MINIFY=1 npm test
 
 ## LICENSE
 
