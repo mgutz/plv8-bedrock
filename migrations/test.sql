@@ -16,9 +16,8 @@ do language plv8 $$
   }
   plv8.elog(LOG, ['', 'Requirable Packages', '-------------------'].concat(packages.sort()).join('\n'));
 
-
-
-
+  var spec = require('/plv8-microspec');
+  spec.colorful(true);
   var test = require('/test');
   test.run();
 $$;

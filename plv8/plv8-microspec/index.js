@@ -1,4 +1,11 @@
-var globals = [
+
+var colors = require('mgutz-colors');
+var passColor = colors.fn("green");
+var failColor = colors.fn("red");
+var headerColor = colors.fn("cyan");
+
+var options = {
+  globals: [
     'DEBUG5',
     'DEBUG4',
     'DEBUG3',
@@ -11,11 +18,14 @@ var globals = [
     'WARNING',
     'ERROR',
     'plv8'
-];
+  ],
+  colorful: false
+};
+
 
 function checkGlobals(moreGlobals) {
   var global = (function(){ return this; }).call(null);
-  var allGlobals = globals.concat(moreGlobals);
+  var allGlobals = options.globals.concat(moreGlobals);
   var summary = [];
   Object.keys(global).forEach(function(p) {
     if (allGlobals.indexOf(p) < 0) {
@@ -30,7 +40,7 @@ var PENDING = '_';
 var ONLY = '+';
 
 module.exports = function(group, opts, tests) {
-  var name, fn, total, only;
+  var name, fn, total, only, message;
 
   if (arguments.length === 2) {
     tests = opts;
@@ -63,7 +73,7 @@ module.exports = function(group, opts, tests) {
 
   if (subset.length > 0) set = subset;
 
-  var summary = ['', group];
+  var summary = ['', options.colorful ?  headerColor(group) : group];
   try {
     if (before) before();
     var i, test;
@@ -83,16 +93,32 @@ module.exports = function(group, opts, tests) {
         fn();
         ran += 1;
       }
+
+      if (options.colorful) {
+        var last = summary[summary.length - 1];
+        summary[summary.length-1] = passColor(last);
+      }
     }
     if (after) after();
 
-    var message = '  ran ' + ran + ' specs';
+    message = '  ran ' + ran + ' specs';
     if (pending > 0) message += ' (' + pending + ' pending)';
     summary.push(message);
     summary = summary.concat(checkGlobals(opts.globals));
   } catch(e) {
-    summary.push('!!! ', e.toString());
-    summary.push('!!! ', e.stack);
+    if (e.stack) {
+      message = e.stack;
+    } else {
+      message = e.message;
+    }
+
+    if (options.colorful) {
+      var last = summary[summary.length - 1];
+      summary[summary.length-1] = failColor(last);
+      summary.push(failColor(message));
+    } else {
+      summary.push(message);
+    }
   }
 
   console.log(summary.join('\n'));
@@ -100,6 +126,10 @@ module.exports = function(group, opts, tests) {
 
 
 module.exports.addGlobals = function(arr) {
-  globals = globals.concat(arr);
+  options.globals = options.globals.concat(arr);
 };
+
+module.exports.colorful = function(truthy) {
+  options.colorful = truthy;
+}
 

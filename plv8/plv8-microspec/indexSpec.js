@@ -74,7 +74,7 @@ describe('microspec - intentional errors', {
   },
 
   'should fail': function() {
-    assert.ok(false);
+    assert.equal("hello", "yello");
   },
 });
 
