@@ -34,8 +34,8 @@ Clone the project
 
 Install dependencies
 
-    # use --force to upgrade it if it was previous installed
-    # mygrate-pre will be updated often until I release 0.2.0
+    # use --force to upgrade if mygrate was previously installed
+    # (mygrate-pre will be updated often until I release 0.2.0)
     npm install mygrate@0.2.0-pre -g --force
     npm install
 
@@ -138,7 +138,7 @@ These globals are added for convenience
 To dump the global context
 
     mygrate console
-    do language plv8 'plv8._dumpGlobal()';
+    do language plv8 'require('/app/util').dumpGlobal()';
 
 
 ## Best Practices and Tips

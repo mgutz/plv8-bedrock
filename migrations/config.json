@@ -1,7 +1,7 @@
 {
   "development": {
     "mygrate": {
-      "minHookDate": "201312262225"
+      "minHookDate": "201312220022"
     },
     "postgresql": {
       "host": "localhost",

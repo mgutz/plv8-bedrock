@@ -11,7 +11,7 @@ module.exports =
 
   # select addPerson('{ "firstName": "mario", "lastName": "gutierrez", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}}'::json);
   addPerson: (person) ->
-    plv8._executeScalar """
+    plv8.__executeScalar """
       INSERT INTO people (first_name, last_name, likes, meta)
       VALUES ($1, $2, $3, $4)
       RETURNING id

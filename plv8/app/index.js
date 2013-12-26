@@ -3,6 +3,7 @@
 require('../plv8-fill');
 
 var example = require('./example');
+var util = require('./util');
 
 module.exports = {
   example: example
