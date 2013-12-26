@@ -1,6 +1,6 @@
 # plv8-logger
 
-Simple named, level logger that delegates to `plv8.elog`
+Simple, named level logger that delegates to `plv8.elog`
 
 ## Using
 

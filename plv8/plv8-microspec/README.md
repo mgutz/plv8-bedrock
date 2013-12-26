@@ -9,7 +9,7 @@ microspec has a few options
 
     var spec = require('plv8-microspec');
 
-To run red/green tests from terminal
+To output colorful red/green (pass/fail) messages
 
     spec.colorful(true);
 
@@ -21,12 +21,12 @@ Global leaks are checked automatically. To add exclusions
 ## Example
 
 A spec is a simple function `spec(name, testsObject)`.
-Each spec is grouped by subject matter or name. Test functions are properties
+Each spec requires a `name`, which is the subject matter. Test functions are properties
 of `testObject`. The first character of a test name may be special character
 
-*   '+' - Run ONLY marked tests. A quick way to isolate 1 or more tests.
-*   '_' - Pending test, will not run.
-*   '#' - Ignore test.
+*   `+` Run ONLY marked tests. A quick way to isolate 1 or more tests.
+*   `_` Pending test, will not run.
+*   `#` Ignore test.
 
 Any other test is a normal test.
 
@@ -52,7 +52,7 @@ Example
       }
     });
 
-Requiring a spec runs it. For example, to run multiple specs
+Requiring a spec runs it immediately. For example, to run multiple specs
 
     require('/test/example');
     require('/test/example2');
