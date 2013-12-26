@@ -12,7 +12,8 @@
     "requireify": "git://github.com/mgutz/requireify#omit-index-name",
     "pg": "~2.9.0",
     "uglify-js": "~2.4.8",
-    "proclaim": "~2.0.0"
+    "proclaim": "~2.0.0",
+    "mgutz-colors": "~0.1.2"
   },
   "devDependencies": {},
   "scripts": {
