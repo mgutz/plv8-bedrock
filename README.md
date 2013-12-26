@@ -138,7 +138,7 @@ These globals are added for convenience
 To dump the global context
 
     mygrate console
-    do language plv8 'require('/app/util').dumpGlobal()';
+    do language plv8 'require("/app/util").dumpGlobal()';
 
 
 ## Best Practices and Tips
