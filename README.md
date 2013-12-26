@@ -3,7 +3,8 @@
 Migration and JavaScript foundation for PostgreSQL/plv8.
 
 Bedrock is an example project that lets you code PostgreSQL
-functions using JavaScript or CoffeeScript while using many node.js npm modules.
+functions using JavaScript or CoffeeScript while using many of the
+available node.js npm modules.
 [browserify](http://browserify.org/) bundles your code and dependencies into a
 self-contained bundle. The bundle is loaded into the plv8 runtime via
 [mygrate](https://github.com/mgutz/mygrate), which uses `psql` compatible SQL
@@ -33,7 +34,9 @@ Clone the project
 
 Install dependencies
 
-    npm install mygrate@0.2.0-pre -g
+    # use --force to upgrade it if it was previous installed
+    # mygrate-pre will be updated often until I release 0.2.0
+    npm install mygrate@0.2.0-pre -g --force
     npm install
 
 Create the database which requires a superuser with password
@@ -69,23 +72,27 @@ Or, run tests
 
 For new tasks
 
-1.  Create a migration
+1.  Choose either
 
+    a) Create a migration for SQL only (no plv8)
+
+        # up.sql and down.sql only
         mygrate new user-auth
 
-    To create a plv8 migration, you have to manually copy
-    `migrations/*-plv8-startup` for now and change the timestamp.
-
-2.  Add or update tables, functions in `up.sql`.  Add corresponding revert
+    Add or update tables, functions in `up.sql`.  Add corresponding revert
     logic in `down.sql`.
 
-    For plv8 tasks, edit JavaScript in `plv8/`. Add function declarations
-    in `migrations/CURRENT/up-functions.sql`.
+    b) Create migration with plv8 bundling
+
+        mygrate new user-auth -t plv8
+
+    Edit JS sources in `plv8/`. Add function declarations to
+    `migrations/CURRENT/up-functions.sql`.
 
     NOTE: The plv8 directory resides outside of migrations
     for easy version control. A snapshot of the source is bundled
-    by each migration. In practice, you would have many `plv8-startup` migrations
-    corresponding to milestones.
+    by each migration. In practice, you would have many `plv8`
+    migrations corresponding to milestones.
 
 3.  To update the database and mygrate down/up your last migration created
     above
@@ -128,6 +135,12 @@ These globals are added for convenience
 
 *   `console` - node.js console
 
+To dump the global context
+
+    mygrate console
+    do language plv8 'plv8._dumpGlobal()';
+
+
 ## Best Practices and Tips
 
 *   Change the `App` namespace in `plv8/index.js`
@@ -144,6 +157,9 @@ These globals are added for convenience
 *   To minify
 
         MINIFY=1 npm test
+
+*   Want to add other language transpilers? If there's a browserify plugin,
+    add it to migrations/MIGRATION/prehook
 
 ## LICENSE
 

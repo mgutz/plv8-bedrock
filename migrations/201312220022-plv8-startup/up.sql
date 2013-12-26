@@ -3348,7 +3348,7 @@ module.exports.Console = Console;
 },{"__browserify_process":3,"assert":1,"util":5}],15:[function(require,module,exports){
 var process=require("__browserify_process"),__filename="/plv8-console/index.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  }process.stdout = {
   write: function() {
-    var args = [].slice.call(arguments, 0);
+    var args = Array.prototype.slice.call(arguments);
     args.unshift(LOG);
     plv8.elog.apply(plv8, args);
   }
@@ -3356,7 +3356,7 @@ var process=require("__browserify_process"),__filename="/plv8-console/index.js";
 
 process.stderr = {
   write: function() {
-    var args = [].slice.call(arguments, 0);
+    var args = Array.prototype.slice.call(arguments);
     args.unshift(WARNING);
     plv8.elog.apply(plv8, args);
   }
@@ -3387,6 +3387,37 @@ plv8._executeScalar = function() {
   } else {
     throw new Error('Expected single row, query returned multiple rows');
   }
+};
+
+
+/**
+ * Gets the global context.
+ */
+plv8._getGlobal = function() {
+  return (function() { return this; })(null);
+};
+
+
+/**
+ * Logs the global context and global.require.
+ */
+plv8._dumpGlobal = function() {
+  var global = plv8._getGlobal();
+
+  var globals = [];
+  for (var k in global) {
+    globals.push(k);
+  }
+  var summary = ['\n', 'Globals', '-------'].concat(globals.sort()).join('\n');
+
+  if (global.require) {
+    var packages =  [];
+    for (var k in global.require) {
+      packages.push(k);
+    }
+    summary = summary.concat(['\n', 'Requirable Packages', '-------------------'].concat(packages.sort()).join('\n'));
+  }
+  plv8.elog(LOG, summary);
 };
 
 ;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    if (moduleName.match(/\/index$/)) {      moduleName = (moduleName.length === 6)        ? '/' : moduleName.slice(0, -6);    }    global.require[moduleName] = module.exports;  }
@@ -3499,13 +3530,7 @@ exports.getLogger = function(name, level) {
 ;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    if (moduleName.match(/\/index$/)) {      moduleName = (moduleName.length === 6)        ? '/' : moduleName.slice(0, -6);    }    global.require[moduleName] = module.exports;  }
 
 },{}],18:[function(require,module,exports){
-var __filename="/plv8-microspec/index.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  };var global = (function(){ return this; }).call(null);global.require['mgutz-colors'] = require('mgutz-colors');
-var colors = require('mgutz-colors');
-var passColor = colors.fn("green");
-var failColor = colors.fn("red");
-var headerColor = colors.fn("cyan");
-
-var options = {
+var __filename="/plv8-microspec/index.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  };var global = (function(){ return this; }).call(null);global.require['mgutz-colors'] = require('mgutz-colors');var options = {
   globals: [
     'DEBUG5',
     'DEBUG4',
@@ -3522,6 +3547,9 @@ var options = {
   ],
   colorful: false
 };
+
+// these are set only if options.colorful(true) is called
+var colors, failColor, headerColor, passColor;
 
 
 function checkGlobals(moreGlobals) {
@@ -3638,16 +3666,22 @@ module.exports.addGlobals = function(arr) {
 
 module.exports.colorful = function(truthy) {
   options.colorful = truthy;
+  if (truthy) {
+    colors = require('mgutz-colors');
+    passColor = colors.fn("green");
+    failColor = colors.fn("red");
+    headerColor = colors.fn("cyan");
+  }
 }
 
 ;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    if (moduleName.match(/\/index$/)) {      moduleName = (moduleName.length === 6)        ? '/' : moduleName.slice(0, -6);    }    global.require[moduleName] = module.exports;  }
 
 },{"mgutz-colors":6}],19:[function(require,module,exports){
 var __filename="/plv8-microspec/indexSpec.js";  var global = (function(){ return this; }).call(null);  if(!global.require){    global.require = global.require || function require(key){return global.require[key];};    (function(){    var require = global.require;    var ret = global.require;    Object.defineProperty(global, 'require', {        get: function(){          return ret;        },        set: function(newRequire){            ret = function(key){                if(require[key]){                  return require[key];                }else{                  var temp = ret;                  var module;                  ret = newRequire;                  try {                    module = newRequire(key);                  }                  catch(e){                    ret = temp;                    throw e;                  }                  ret = temp;                  return module;                }            };            for(var key in require){              ret[key] = require[key];            }        }    });    })();  };var global = (function(){ return this; }).call(null);global.require['assert'] = require('assert');var assert = require('assert');
-var describe = require('../plv8-microspec');
+var spec = require('../plv8-microspec');
 
 var ran = 0;
-describe('microspec', {
+spec('microspec', {
 
   before: function() {
     ran++;
@@ -3678,7 +3712,7 @@ describe('microspec', {
 });
 
 ran = 0;
-describe('microspec - subset marked with "+"', {
+spec('microspec - subset marked with "+"', {
   before: function() {
     ran++;
   },
@@ -3708,9 +3742,9 @@ describe('microspec - subset marked with "+"', {
 });
 
 
-describe('microspec - intentional errors', {
+spec('microspec - intentional errors', {
   'should catch global var leak': function() {
-    describe('global var leak',  function() {
+    spec('global var leak',  function() {
       badvar = 100;
     });
     // delete bad var from above for other tests
@@ -3722,8 +3756,6 @@ describe('microspec - intentional errors', {
     assert.equal("hello", "yello");
   },
 });
-
-
 
 ;  var global = (function(){ return this; }).call(null);  if(typeof __filename !== 'undefined'){    var moduleName = __filename.slice(0, __filename.lastIndexOf('.'));    if (moduleName.match(/\/index$/)) {      moduleName = (moduleName.length === 6)        ? '/' : moduleName.slice(0, -6);    }    global.require[moduleName] = module.exports;  }
 

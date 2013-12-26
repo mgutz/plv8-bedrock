@@ -1,9 +1,3 @@
-
-var colors = require('mgutz-colors');
-var passColor = colors.fn("green");
-var failColor = colors.fn("red");
-var headerColor = colors.fn("cyan");
-
 var options = {
   globals: [
     'DEBUG5',
@@ -21,6 +15,9 @@ var options = {
   ],
   colorful: false
 };
+
+// these are set only if options.colorful(true) is called
+var colors, failColor, headerColor, passColor;
 
 
 function checkGlobals(moreGlobals) {
@@ -137,5 +134,11 @@ module.exports.addGlobals = function(arr) {
 
 module.exports.colorful = function(truthy) {
   options.colorful = truthy;
+  if (truthy) {
+    colors = require('mgutz-colors');
+    passColor = colors.fn("green");
+    failColor = colors.fn("red");
+    headerColor = colors.fn("cyan");
+  }
 }
 

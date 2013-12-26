@@ -1,0 +1,30 @@
+{
+  "development": {
+    "mygrate": {
+      "minHookDate": "201312262225"
+    },
+    "postgresql": {
+      "host": "localhost",
+      "database": "plv8_bedrock_dev",
+      "user": "plv8_bedrock_dev_user",
+      "password": "dev",
+      "port": 5432
+    }
+  },
+  "test": {
+    "postgresql": {
+      "host": "localhost",
+      "database": "plv8_bedrock_test",
+      "user": "plv8_bedrock_test_user",
+      "password": "test"
+    }
+  },
+  "production": {
+    "postgresql": {
+      "host": "localhost",
+      "database": "plv8_bedrock_prod",
+      "user": "plv8_bedrock_prod_user",
+      "password": "prod"
+    }
+  }
+}

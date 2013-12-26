@@ -1,8 +1,8 @@
 var assert = require('assert');
-var describe = require('../plv8-microspec');
+var spec = require('../plv8-microspec');
 
 var ran = 0;
-describe('microspec', {
+spec('microspec', {
 
   before: function() {
     ran++;
@@ -33,7 +33,7 @@ describe('microspec', {
 });
 
 ran = 0;
-describe('microspec - subset marked with "+"', {
+spec('microspec - subset marked with "+"', {
   before: function() {
     ran++;
   },
@@ -63,9 +63,9 @@ describe('microspec - subset marked with "+"', {
 });
 
 
-describe('microspec - intentional errors', {
+spec('microspec - intentional errors', {
   'should catch global var leak': function() {
-    describe('global var leak',  function() {
+    spec('global var leak',  function() {
       badvar = 100;
     });
     // delete bad var from above for other tests
@@ -77,6 +77,4 @@ describe('microspec - intentional errors', {
     assert.equal("hello", "yello");
   },
 });
-
-
 

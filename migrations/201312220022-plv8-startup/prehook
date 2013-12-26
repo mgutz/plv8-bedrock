@@ -5,6 +5,7 @@ set -e
 # This script is run by mygrate before up.sql is executed
 #
 
+PLV8_SRC=../../plv8
 PATH=../../node_modules/.bin:$PATH
 
         #--insert-global-vars __filename,__dirname,global \
@@ -13,12 +14,12 @@ if [ "$MINIFY" = "1" ]; then
     browserify \
         -t coffeeify --extension=".coffee"  \
         -t requireify \
-        ../../plv8/index.js ../../plv8/test/index.js | uglifyjs > bundle.js
+        $PLV8_SRC/index.js ../../plv8/test/index.js | uglifyjs > bundle.js
 else
     browserify \
         -t coffeeify --extension=".coffee"  \
         -t requireify \
-        ../../plv8/index.js ../../plv8/test/index.js > bundle.js
+        $PLV8_SRC/index.js ../../plv8/test/index.js > bundle.js
 fi
 
 # Create the single file up.sql required by mygrate
