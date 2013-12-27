@@ -22,7 +22,14 @@ Global leaks are checked automatically. To add exclusions
 
 A spec is a simple function `spec(name, testsObject)`.
 Each spec requires a `name`, which is the subject matter. Test functions are properties
-of `testObject`. The first character of a test name may be special character
+of `testObject`.
+
+The first character of a spec name may be special
+
+*   `_` Pending spec, will not run.
+*   `#` Ignore spec.
+
+The first character of a test name may be special character
 
 *   `+` Run ONLY marked tests. A quick way to isolate 1 or more tests.
 *   `_` Pending test, will not run.

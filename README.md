@@ -104,19 +104,17 @@ For new tasks
 
         mygrate migrations/test.sql
 
-Repeat steps 2, 3 and 4 as needed. A simpler way to edit and test is
+Repeat steps 2, 3 as needed. A simpler way to edit and test is
 
-    npm test
+    npm test    # runs 2 and 3
 
 NOTE:
 
-The `minHookDate` property in config.js is checked to determine whether
-hooks are run. The prehook in this project updates the JavaScript bundle.
+The `minHookDate` property in migrations/config.json is the timestamp for which
+migration to run. The prehook in this project updates the JavaScript bundle.
 You do not want those to run for migrations that have already been applied
-to the production database.
-
-Simply set the `minHookDate` to a folder timestamp before the one you are
-coding.
+to the production database. To skip previous hooks, set the `minHookDate` to
+your current folder timestamp.
 
 
 ## Globals

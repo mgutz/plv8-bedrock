@@ -78,3 +78,14 @@ spec('microspec - intentional errors', {
   },
 });
 
+spec('_microspec - entire spec is pending', {
+  'should fail': function() {
+    assert.true(false);
+  }
+});
+
+spec('#microspec - entire spec is ignored', {
+  'should fail': function() {
+    assert.true(false);
+  }
+});

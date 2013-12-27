@@ -37,6 +37,9 @@ var PENDING = '_';
 var ONLY = '+';
 
 module.exports = function(group, opts, tests) {
+  if (group[0] === IGNORE) return;
+
+
   var name, fn, total, only, message;
 
   if (arguments.length === 2) {
@@ -70,7 +73,21 @@ module.exports = function(group, opts, tests) {
 
   if (subset.length > 0) set = subset;
 
+
+  var pendingGroup;
+  if (group[0] === PENDING) {
+    pendingGroup = true;
+    group = '(PENDING) ' + group.slice(1);
+  }
+
   var summary = ['', options.colorful ?  headerColor(group) : group];
+
+  if (pendingGroup) {
+    console.log(summary.join('\n'));
+    return;
+  }
+
+
   try {
     if (before) before();
     var i, test;
