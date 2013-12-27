@@ -123,7 +123,7 @@ These globals are added for convenience
 
 *   `App` - The app namespace
 
-*   `require` - Access modules in bundle
+*   `require` - Access packages in bundle
 
         do language plv8 $$
             var _ = require('underscore');
@@ -158,6 +158,11 @@ To dump the global context
 
 *   Want to add other language transpilers? If there's a browserify plugin,
     add it to migrations/MIGRATION/prehook
+
+*   To create test or production database
+
+        NODE_ENV=test mygrate createdb
+        NODE_ENV=production mygrate createdb
 
 ## LICENSE
 
