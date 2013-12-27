@@ -1,6 +1,6 @@
 var assert = require('assert');
 var example = require('../app/example');
-var spec = require('../plv8-microspec');
+var spec = require('plv8-mantle/microspec');
 
 
 spec('hello', {

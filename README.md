@@ -122,21 +122,34 @@ your current folder timestamp.
 These globals are added for convenience
 
 *   `App` - The app namespace
-
+*   `console` - node.js console
 *   `require` - Access packages in bundle
 
-        do language plv8 $$
-            var _ = require('underscore');
-            # note local folders start with '/'
-            var logger = require('/app/logger');
-        $$;
+    These packages may be required in SQL scripts.
 
-*   `console` - node.js console
+    * `./test`
+    * `plv8-mantle/microspec`
+    * `plv8-mantle/util`
+
+    To expose more, edit `migrations/MIGRATION/prehook. Alternatively,
+    attach classes to `App` which is a global. In JS and Coffee
+    source any package may be required just like in node.js.
+
+    Here is an example of their use
+
+        do language plv8 $$
+          require('plv8-mantle/util').dumpGlobal();
+
+          var spec = require('plv8-mantle/microspec');
+          spec.colorful(true);
+          var test = require('./test');
+          test.run();
+        $$;
 
 To dump the global context
 
     mygrate console
-    do language plv8 'require("/app/util").dumpGlobal()';
+    do language plv8 'require("plv8-mantle/util").dumpGlobal()';
 
 
 ## Best Practices and Tips

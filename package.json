@@ -9,16 +9,14 @@
     "pg-hstore": "git://github.com/tomauty/pg-hstore",
     "browserify": "~3.14.0",
     "coffeeify": "~0.5.2",
-    "requireify": "git://github.com/mgutz/requireify#omit-index-name",
     "pg": "~2.9.0",
     "uglify-js": "~2.4.8",
-    "proclaim": "~2.0.0",
-    "mgutz-colors": "~0.1.2"
+    "plv8-mantle": "git://github.com/mgutz/plv8-mantle"
   },
   "devDependencies": {},
   "scripts": {
     "test": "mygrate last && mygrate migrations/test.sql"
   },
   "author": "",
-  "license": "BSD-2-Clause"
+  "license": "MIT"
 }

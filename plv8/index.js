@@ -1,9 +1,8 @@
-// add any libraries here that are not used by the app but may be
-// used interactively in psql/pgadmin3
-var _ = require('underscore');
-_.str = require('underscore.string');
+// Adds some convenience methods to plv8, eg plv8.__executeScalar. Only needs
+// to be required once.
+require('plv8-mantle/plv8-fill');
 
 // INTENTIONAL global leak
-console = require('./plv8-console');
+console = require('plv8-mantle/console');
 App = require('./app');
 

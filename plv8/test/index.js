@@ -1,7 +1,7 @@
-var microspec = require('../plv8-microspec');
+var microspec = require('plv8-mantle/microspec');
 
 exports.run = function() {
   microspec.addGlobals(['require', 'App', 'console']);
-  require('../plv8-microspec/microspecSpec');
+  require('plv8-mantle/microspec/microspecSpec');
   require('./exampleSpec');
 };

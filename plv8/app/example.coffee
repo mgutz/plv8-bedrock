@@ -2,7 +2,7 @@ str = require('underscore.string')
 HSTORE = require('pg-hstore')
 
 # create module specific logger
-log = require('../plv8-logger').getLogger('example')
+log = require('plv8-mantle/logger').getLogger('example')
 
 module.exports =
   hello: (name) ->
