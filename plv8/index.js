@@ -1,8 +1,7 @@
-// Adds some convenience methods to plv8, eg plv8.__executeScalar. Only needs
-// to be required once.
+// Adds some convenience methods to plv8, eg plv8.__executeScalar
 require('./lib/plv8-fill');
 
-// INTENTIONAL global leak
+// INTENTIONAL global leaks
 console = require('./lib/console');
 App = require('./app');
 

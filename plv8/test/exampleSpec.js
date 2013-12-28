@@ -1,8 +1,6 @@
-var assert = require('assert');
 var example = require('../app/example');
 var spec = require('../lib/spec');
 var assert = spec.assert;
-
 
 spec('hello', {
   'should enclose within Hello and !': function() {
