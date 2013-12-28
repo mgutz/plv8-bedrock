@@ -3,14 +3,26 @@
  *
  * Edit up-header.sql, up-footer.sql or up-functions.sql instead.
  */
-CREATE extension if not exists plv8;
+create extension if not exists plv8;
 
-CREATE OR REPLACE FUNCTION plv8_startup() RETURNS VOID AS $$
+create table if not exists plv8_sources (
+  filename text,
+  code text
+);
+
+-- insert source so assert can give meaningful code context
+\set code `cat /tmp/bundle.js`
+delete from plv8_sources where filename = 'plv8_startup';
+insert into plv8_sources
+  (filename, code)
+values
+  ('plv8_startup', :'code');
+
+create or replace function plv8_startup() returns void as $PLV8$
   // resets App global context properties
   var global = (function(){ return this; }).call(null);
   delete global.App;
   delete global.require;
-
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
@@ -1334,9 +1346,83 @@ exports.getLogger = function(name, level) {
 };
 
 
-},{}],"plv8-mantle/microspec":[function(require,module,exports){
-module.exports=require('4lBhjf');
-},{}],"4lBhjf":[function(require,module,exports){
+},{}],10:[function(require,module,exports){
+/**
+ * Module dependencies.
+ */
+
+var AssertionError = require('assert').AssertionError
+  , callsite = require('callsite');
+
+/**
+ * Expose `assert`.
+ */
+
+module.exports = assert;
+// adjust for plv8_startup preamble
+module.exports.SOURCE_LINE_OFFSET = 0;
+
+/**
+ * Assert the given `expr`.
+ */
+
+function assert(expr) {
+  if (expr) return;
+
+  var stack = callsite();
+
+  //var src = fs.readFileSync(file, 'utf8');
+  var code = plv8.__executeScalar("select code from plv8_sources where filename = 'plv8_startup'");
+  var lines = code.split('\n');
+  if (code) {
+    function getCodeContext(lineno, n) {
+      var i, line, msg = "";
+      var start = Math.max(0, lineno - n);
+      var end = Math.min(lineno + n, lines.length);
+
+      for (i = start; i < end; i++) {
+        line = lines[i];
+        if (line.length > 256) continue;
+        msg += i === lineno ?  '  ⇢ ' : '    ';
+        msg += line.slice(0, 120) + '\n';
+      }
+      return msg;
+    }
+
+    var line, call, msg;
+    for (var i = 1, L = stack.length; i < L; i++) {
+      call = stack[i];
+      var lineno = call.getLineNumber() - module.exports.SOURCE_LINE_OFFSET;
+      line = lines[lineno];
+      if (i === 1 && line.length < 256) {
+        msg = line.match(/assert\((.*)\)/)[1];
+      }
+      if (lineno > 0) {
+        var fnName = call.getFunctionName();
+        msg += '\n';
+        msg += '  at ' + call.getFunctionName();
+        msg += ' (' + call.getFileName() + ':' + call.getLineNumber() + ':' + call.getColumnNumber() + ')';
+
+        var codeContext = getCodeContext(lineno, 2);
+        if (codeContext) {
+          msg += '\n';
+          msg += codeContext;
+        }
+      }
+    }
+  } else {
+    msg = 'Could not load code from plv8_sources table';
+  }
+
+  var err = new AssertionError({
+    message: msg,
+    stackStartFunction: stack[0].fun
+  });
+
+  throw err;
+}
+
+},{"assert":1,"callsite":13}],11:[function(require,module,exports){
 var options = {
   globals: [
     'DEBUG5',
@@ -1429,21 +1515,21 @@ module.exports = function(group, opts, tests) {
 
   try {
     if (before) before();
-    var i, test;
+    var i, test, testCase;
     for (i = 0; i < set.length; i++) {
       test = set[i];
       name = test.name;
-      fn = test.fn;
+      testCase = test.fn;
       if (name[0] === PENDING) {
         summary.push('  - (PENDING) ' + name.slice(1));
         pending += 1;
       } else if (name[0] === ONLY) {
         summary.push('  - ' + name.slice(1));
-        fn();
+        testCase();
         ran += 1;
       } else {
         summary.push('  - ' + name);
-        fn();
+        testCase();
         ran += 1;
       }
 
@@ -1499,8 +1585,11 @@ module.exports.colorful = function(truthy) {
 }
 
 
-},{"mgutz-colors":13}],12:[function(require,module,exports){
-var assert = require('assert');
+module.exports.assert = require('./assert');
+
+
+},{"./assert":10,"mgutz-colors":14}],12:[function(require,module,exports){
+var assert = require('./assert');
 var spec = require('../microspec');
 
 var ran = 0;
@@ -1511,7 +1600,7 @@ spec('microspec', {
   },
 
   'should pass': function() {
-    assert.ok(true);
+    assert(true);
     ran++;
   },
 
@@ -1526,7 +1615,7 @@ spec('microspec', {
   },
 
   after: function() {
-    assert.ok(ran === 3);
+    assert(ran === 3);
   },
 
   'should have run': function() {
@@ -1541,7 +1630,7 @@ spec('microspec - subset marked with "+"', {
   },
 
   '+should pass': function() {
-    assert.ok(true);
+    assert(true);
     ran++;
   },
 
@@ -1556,7 +1645,7 @@ spec('microspec - subset marked with "+"', {
   },
 
   after: function() {
-    assert.ok(ran === 2);
+    assert(ran === 2);
   },
 
   'should have run': function() {
@@ -1576,23 +1665,35 @@ spec('microspec - intentional errors', {
   },
 
   'should fail': function() {
-    assert.equal("hello", "yello");
+    assert("hello" === "yello");
   },
 });
 
 spec('_microspec - entire spec is pending', {
   'should fail': function() {
-    assert.true(false);
+    assert(false);
   }
 });
 
 spec('#microspec - entire spec is ignored', {
   'should fail': function() {
-    assert.true(false);
+    assert(false);
   }
 });
 
-},{"../microspec":"4lBhjf","assert":1}],13:[function(require,module,exports){
+},{"../microspec":11,"./assert":10}],13:[function(require,module,exports){
+
+module.exports = function(){
+  var orig = Error.prepareStackTrace;
+  Error.prepareStackTrace = function(_, stack){ return stack; };
+  var err = new Error;
+  Error.captureStackTrace(err, arguments.callee);
+  var stack = err.stack;
+  Error.prepareStackTrace = orig;
+  return stack;
+};
+
+},{}],14:[function(require,module,exports){
 /*============================================================================
  * Copyright(c) 2010 Mario L Gutierrez <mario@mgutz.com>
  * MIT Licensed
@@ -1600,7 +1701,7 @@ spec('#microspec - entire spec is ignored', {
 
 module.exports = require('./lib/colors');
 
-},{"./lib/colors":14}],14:[function(require,module,exports){
+},{"./lib/colors":15}],15:[function(require,module,exports){
 /*============================================================================
  * Copyright(c) 2012 Mario L Gutierrez <mario@mgutz.com>
  * MIT Licensed
@@ -1727,7 +1828,7 @@ exports.fn = function(style) {
 };
 
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * plv8Fill - Adds extra methods to plv8. All methods are prefixed with '__'
  * to reduce possibility of conflict.
@@ -1739,9 +1840,9 @@ exports.fn = function(style) {
 plv8.__executeScalar = function() {
   var result = plv8.execute.apply(plv8, arguments);
   var L = result.length;
-  if (L == 0)  {
+  if (L === 0)  {
     return null;
-  } else if (L == 1) {
+  } else if (L === 1) {
     var row = result[0];
     var scalarKey = Object.keys(row)[0];
     return row[scalarKey];
@@ -1749,6 +1850,19 @@ plv8.__executeScalar = function() {
     throw new Error('Expected single row, query returned multiple rows');
   }
 };
+
+
+plv8.__executeRow = function() {
+  var result = plv8.execute.apply(plv8, arguments);
+  var L = result.length;
+  if (L === 0)  {
+    return null;
+  } else if (L === 1) {
+    return result[0];
+  } else {
+    throw new Error('Expected single row, query returned multiple rows');
+  }
+}
 
 
 plv8.__dumpGlobal = function() {
@@ -1770,9 +1884,7 @@ plv8.__dumpGlobal = function() {
 }
 
 
-},{}],"plv8-mantle/util":[function(require,module,exports){
-module.exports=require('uni7hM');
-},{}],"uni7hM":[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * Gets the global context.
  */
@@ -1802,6 +1914,7 @@ exports.dumpGlobal = function() {
   // }
   plv8.elog(LOG, summary);
 };
+
 
 },{}],18:[function(require,module,exports){
 //  Underscore.string
@@ -2511,40 +2624,65 @@ module.exports = {
 },{"./example":19}],21:[function(require,module,exports){
 // Adds some convenience methods to plv8, eg plv8.__executeScalar. Only needs
 // to be required once.
-require('plv8-mantle/plv8-fill');
+require('./lib/plv8-fill');
 
 // INTENTIONAL global leak
-console = require('plv8-mantle/console');
+console = require('./lib/console');
 App = require('./app');
 
 
-},{"./app":20,"plv8-mantle/console":8,"plv8-mantle/plv8-fill":15}],22:[function(require,module,exports){
+},{"./app":20,"./lib/console":22,"./lib/plv8-fill":23}],22:[function(require,module,exports){
+module.exports = require('plv8-mantle/console');
+
+},{"plv8-mantle/console":8}],23:[function(require,module,exports){
+module.exports = require('plv8-mantle/plv8-fill');
+
+},{"plv8-mantle/plv8-fill":16}],"LA18pb":[function(require,module,exports){
+module.exports = require('plv8-mantle/microspec');
+
+},{"plv8-mantle/microspec":11}],"./lib/spec":[function(require,module,exports){
+module.exports=require('LA18pb');
+},{}],"./lib/util":[function(require,module,exports){
+module.exports=require('rPqzDy');
+},{}],"rPqzDy":[function(require,module,exports){
+module.exports = require('plv8-mantle/util');
+
+},{"plv8-mantle/util":17}],28:[function(require,module,exports){
 var assert = require('assert');
 var example = require('../app/example');
-var spec = require('plv8-mantle/microspec');
+var spec = require('../lib/spec');
+var assert = spec.assert;
 
 
 spec('hello', {
   'should enclose within Hello and !': function() {
-    assert.equal(example.hello('World'), 'Hello World!');
+    assert(example.hello('World') === 'Hello World!');
   },
 
   'should titleize': function() {
-    assert.equal(example.hello('mario'), 'Hello Mario!');
+    assert(example.hello('mario') === 'Hello Mario!');
   }
 });
 
 spec('addPerson', {
   'should return id': function() {
     var id = example.addPerson({ "firstName": "mario", "lastName": "gutierrez", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}});
-    assert.ok(id > 0);
+    assert(id > 0);
   }
 });
 
-},{"../app/example":19,"assert":1,"plv8-mantle/microspec":"4lBhjf"}],"./test":[function(require,module,exports){
+spec('better assert', {
+  'should fail': function() {
+    assert(3 > 5);
+  }
+});
+
+},{"../app/example":19,"../lib/spec":"LA18pb","assert":1}],"./test":[function(require,module,exports){
 module.exports=require('l6ZAC8');
 },{}],"l6ZAC8":[function(require,module,exports){
-var microspec = require('plv8-mantle/microspec');
+var microspec = require('../lib/spec');
+var assert = microspec.assert;
+assert.SOURCE_LINE_OFFSET = 7;  // adjust for preamble lines in the source
 
 exports.run = function() {
   microspec.addGlobals(['require', 'App', 'console']);
@@ -2552,8 +2690,7 @@ exports.run = function() {
   require('./exampleSpec');
 };
 
-},{"./exampleSpec":22,"plv8-mantle/microspec":"4lBhjf","plv8-mantle/microspec/microspecSpec":12}]},{},[21,"l6ZAC8"])
-$$ LANGUAGE plv8;
+},{"../lib/spec":"LA18pb","./exampleSpec":28,"plv8-mantle/microspec/microspecSpec":12}]},{},[21,"l6ZAC8"])$PLV8$ LANGUAGE plv8;
 
 /* TODO: add Function declarations here */
 

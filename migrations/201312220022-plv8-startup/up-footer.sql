@@ -1,3 +1,2 @@
-
-$$ LANGUAGE plv8;
+$PLV8$ LANGUAGE plv8;
 

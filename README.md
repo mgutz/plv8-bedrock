@@ -128,28 +128,23 @@ These globals are added for convenience
     These packages may be required in SQL scripts.
 
     * `./test`
-    * `plv8-mantle/microspec`
-    * `plv8-mantle/util`
+    * `./lib/spec`
+    * `./lib/util`
 
-    To expose more, edit `migrations/MIGRATION/prehook. Alternatively,
-    attach classes to `App` which is a global. In JS and Coffee
-    source any package may be required just like in node.js.
+    To expose more, edit `migrations/MIGRATION/prehook`. Alternatively,
+    add properties classes to `App` which is a global variable. In JS and
+    Coffee source any package may be required just like in node.js.
 
     Here is an example of their use
 
         do language plv8 $$
-          require('plv8-mantle/util').dumpGlobal();
+          require('./lib/util').dumpGlobal();
 
-          var spec = require('plv8-mantle/microspec');
+          var spec = require('./lib/spec');
           spec.colorful(true);
           var test = require('./test');
           test.run();
         $$;
-
-To dump the global context
-
-    mygrate console
-    do language plv8 'require("plv8-mantle/util").dumpGlobal()';
 
 
 ## Best Practices and Tips
