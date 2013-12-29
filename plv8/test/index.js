@@ -1,7 +1,7 @@
 var spec = require('./microspec');
 spec.options({
   sourceLineOffset: 7,
-  contextLines: 2
+  contextLines: 3
 });
 
 exports.run = function() {

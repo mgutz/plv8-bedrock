@@ -19,7 +19,9 @@ if [ "$MINIFY" = "1" ]; then
         -r "./test/microspec" \
         index.js test/index.js | uglifyjs > /tmp/bundle.js
 else
+    # --insert-globals is needed for stack traces in specs
     browserify \
+        --insert-globals \
         -t coffeeify --extension=".coffee"  \
         -r "./test" \
         -r "./test/microspec" \
