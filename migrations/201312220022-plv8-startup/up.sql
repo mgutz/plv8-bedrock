@@ -1347,103 +1347,13 @@ exports.getLogger = function(name, level) {
 
 
 },{}],10:[function(require,module,exports){
-/**
- * Module dependencies.
- */
-
-var AssertionError = require('assert').AssertionError
-  , callsite = require('callsite');
-
-/**
- * Expose `assert`.
- */
-
-module.exports = assert;
-// adjust for plv8_startup preamble
-module.exports.SOURCE_LINE_OFFSET = 0;
-
-/**
- * Assert the given `expr`.
- */
-
-function assert(expr) {
-  if (expr) return;
-
-  var stack = callsite();
-
-  //var src = fs.readFileSync(file, 'utf8');
-  var code = plv8.__executeScalar("select code from plv8_sources where filename = 'plv8_startup'");
-  var lines = code.split('\n');
-  if (code) {
-    function getCodeContext(lineno, n) {
-      var i, line, msg = "";
-      var start = Math.max(0, lineno - n);
-      var end = Math.min(lineno + n, lines.length);
-
-      for (i = start; i < end; i++) {
-        line = lines[i];
-        if (line.length > 256) continue;
-        msg += i === lineno ?  '  ⇢ ' : '    ';
-        msg += line.slice(0, 120) + '\n';
-      }
-      return msg;
-    }
-
-    var line, call, msg;
-    for (var i = 1, L = stack.length; i < L; i++) {
-      call = stack[i];
-      var lineno = call.getLineNumber() - module.exports.SOURCE_LINE_OFFSET;
-      line = lines[lineno];
-      if (i === 1 && line.length < 256) {
-        msg = line.match(/assert\((.*)\)/)[1];
-      }
-      if (lineno > 0) {
-        var fnName = call.getFunctionName();
-        msg += '\n';
-        msg += '  at ' + call.getFunctionName();
-        msg += ' (' + call.getFileName() + ':' + call.getLineNumber() + ':' + call.getColumnNumber() + ')';
-
-        var codeContext = getCodeContext(lineno, 2);
-        if (codeContext) {
-          msg += '\n';
-          msg += codeContext;
-        }
-      }
-    }
-  } else {
-    msg = 'Could not load code from plv8_sources table';
-  }
-
-  var err = new AssertionError({
-    message: msg,
-    stackStartFunction: stack[0].fun
-  });
-
-  throw err;
-}
-
-},{"assert":1,"callsite":13}],11:[function(require,module,exports){
-var options = {
-  globals: [
-    'DEBUG5',
-    'DEBUG4',
-    'DEBUG3',
-    'DEBUG2',
-    'DEBUG1',
-    'DEBUG',
-    'LOG',
-    'INFO',
-    'NOTICE',
-    'WARNING',
-    'ERROR',
-    'plv8'
-  ],
-  colorful: false
-};
+var options = require('./options');
+var util = require('../util');
+var stackTrace = require('./stackTrace');
+var AssertionError = require('assert').AssertionError;
 
 // these are set only if options.colorful(true) is called
 var colors, failColor, headerColor, passColor;
-
 
 function checkGlobals(moreGlobals) {
   var global = (function(){ return this; }).call(null);
@@ -1461,7 +1371,9 @@ var IGNORE = '#';
 var PENDING = '_';
 var ONLY = '+';
 
-module.exports = function(group, opts, tests) {
+
+
+module.exports = function runSuite(group, opts, tests) {
   if (group[0] === IGNORE) return;
 
 
@@ -1551,11 +1463,10 @@ module.exports = function(group, opts, tests) {
     }
   } catch(e) {
     if (e.stack) {
-      message = e.stack;
+      message = stackTrace(e.stack).message;
     } else {
       message = e.message;
     }
-    message = '\n' + message;
 
     if (options.colorful) {
       var last = summary[summary.length - 1];
@@ -1574,22 +1485,23 @@ module.exports.addGlobals = function(arr) {
   options.globals = options.globals.concat(arr);
 };
 
-module.exports.colorful = function(truthy) {
-  options.colorful = truthy;
-  if (truthy) {
-    colors = require('mgutz-colors');
-    passColor = colors.fn("green");
-    failColor = colors.fn("red");
-    headerColor = colors.fn("cyan");
+module.exports.options = function(opts) {
+  if (arguments.length === 1) {
+    util.extend(options, opts);
+    if (options.colorful) {
+      colors = require('mgutz-colors');
+      passColor = colors.fn('green');
+      failColor = colors.fn('red');
+      headerColor = colors.fn('cyan');
+    }
+  } else {
+    return options;
   }
 }
 
 
-module.exports.assert = require('./assert');
-
-
-},{"./assert":10,"mgutz-colors":14}],12:[function(require,module,exports){
-var assert = require('./assert');
+},{"../util":18,"./options":12,"./stackTrace":13,"assert":1,"mgutz-colors":15}],11:[function(require,module,exports){
+var assert = require('assert');
 var spec = require('../microspec');
 
 var ran = 0;
@@ -1600,7 +1512,7 @@ spec('microspec', {
   },
 
   'should pass': function() {
-    assert(true);
+    assert.ok(true);
     ran++;
   },
 
@@ -1615,7 +1527,7 @@ spec('microspec', {
   },
 
   after: function() {
-    assert(ran === 3);
+    assert.ok(ran === 3);
   },
 
   'should have run': function() {
@@ -1630,7 +1542,7 @@ spec('microspec - subset marked with "+"', {
   },
 
   '+should pass': function() {
-    assert(true);
+    assert.ok(true);
     ran++;
   },
 
@@ -1645,7 +1557,7 @@ spec('microspec - subset marked with "+"', {
   },
 
   after: function() {
-    assert(ran === 2);
+    assert.ok(ran === 2);
   },
 
   'should have run': function() {
@@ -1665,23 +1577,146 @@ spec('microspec - intentional errors', {
   },
 
   'should fail': function() {
-    assert("hello" === "yello");
+    assert.ok("hello" === "yello");
   },
 });
 
 spec('_microspec - entire spec is pending', {
   'should fail': function() {
-    assert(false);
+    assert.ok(false);
   }
 });
 
 spec('#microspec - entire spec is ignored', {
   'should fail': function() {
-    assert(false);
+    assert.ok(false);
   }
 });
 
-},{"../microspec":11,"./assert":10}],13:[function(require,module,exports){
+},{"../microspec":10,"assert":1}],12:[function(require,module,exports){
+module.exports = {
+  // known globals used to determin leaks
+  globals: [
+    'DEBUG5',
+    'DEBUG4',
+    'DEBUG3',
+    'DEBUG2',
+    'DEBUG1',
+    'DEBUG',
+    'LOG',
+    'INFO',
+    'NOTICE',
+    'WARNING',
+    'ERROR',
+    'plv8'
+  ],
+
+  // whether to use ANSI escape color codes when logging
+  colorful: false,
+
+  // used to get actual source in stack traces
+  sourceLineOffset: 0,
+
+  // number of code lines before and after the current statement
+  // in stack traces
+  contextLines: 2
+};
+
+
+},{}],13:[function(require,module,exports){
+/**
+ * Module dependencies.
+ */
+var options = require('./options');
+var callsite = require('callsite');
+
+/**
+ * Expose `assert`.
+ */
+
+var code;
+
+function parseStack(stack) {
+  var i, line, lines = stack.split('\n');
+  var result = [lines[0]];
+  var rex = /([^\(]+)\(([^:]+):(\d+):(\d+)/;
+  var matches;
+
+  for (i = 1; i < lines.length; i++) {
+    line = lines[i];
+    matches = line.match(rex);
+    if (matches) {
+      result.push({
+        location: matches[1].trim(),
+        filename: matches[2],
+        lineno: matches[3],
+        colno: matches[4]
+      })
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Creates a pretty stack trace.
+ */
+function stackTrace(istack) {
+  if (!code) {
+    code = plv8.__executeScalar("select code from plv8_sources where filename = 'plv8_startup'");
+  }
+
+  var stack = parseStack(istack);
+  if (code) {
+    var lines = code.split('\n');
+    function getCodeContext(lineno, n) {
+      var i, line, msg = "";
+      var start = Math.max(0, lineno - n);
+      var end = Math.min(lineno + n, lines.length);
+
+      for (i = start; i < end; i++) {
+        line = lines[i];
+        if (line.length > 256) continue;
+
+        msg += i === lineno ?  '  ⇢   ' : '      ';
+        msg += line.slice(0, 74) + '\n';
+      }
+      return msg;
+    }
+
+    var addLine, line, call, msg = '';
+    for (var i = 0, L = stack.length; i < L; i++) {
+      call = stack[i];
+      msg += '\n';
+
+      if (call.filename === '<anonymous>') {
+        // ignore
+      } else if (call.location) {
+        var lineno = call.lineno - options.sourceLineOffset;
+        if (lineno < 1) continue;
+        line = lines[lineno];
+
+        msg += '  ' + call.location + ' (' + call.filename + ':' + call.lineno + ':' + call.colno + ')';
+
+        var codeContext = getCodeContext(lineno, options.contextLines);
+        if (codeContext) {
+          msg += '\n';
+          msg += codeContext;
+        }
+      } else {
+        msg += call;
+      }
+    }
+  } else {
+    msg = 'Could not load code from plv8_sources table';
+  }
+
+  return { stack: stack, message: msg };
+}
+
+module.exports = stackTrace;
+
+},{"./options":12,"callsite":14}],14:[function(require,module,exports){
 
 module.exports = function(){
   var orig = Error.prepareStackTrace;
@@ -1693,7 +1728,7 @@ module.exports = function(){
   return stack;
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 /*============================================================================
  * Copyright(c) 2010 Mario L Gutierrez <mario@mgutz.com>
  * MIT Licensed
@@ -1701,7 +1736,7 @@ module.exports = function(){
 
 module.exports = require('./lib/colors');
 
-},{"./lib/colors":15}],15:[function(require,module,exports){
+},{"./lib/colors":16}],16:[function(require,module,exports){
 /*============================================================================
  * Copyright(c) 2012 Mario L Gutierrez <mario@mgutz.com>
  * MIT Licensed
@@ -1828,63 +1863,62 @@ exports.fn = function(style) {
 };
 
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * plv8Fill - Adds extra methods to plv8. All methods are prefixed with '__'
  * to reduce possibility of conflict.
  */
 
+
 /**
- * Executes SQL with optional params, returning a scalar value.
+ * Executes `sql` with an `args` array, returning a scalar value.
  */
-plv8.__executeScalar = function() {
+plv8.__executeScalar = function(sql, args) {
   var result = plv8.execute.apply(plv8, arguments);
   var L = result.length;
-  if (L === 0)  {
-    return null;
-  } else if (L === 1) {
+  if (L === 1)  {
     var row = result[0];
-    var scalarKey = Object.keys(row)[0];
+    for (var scalarKey in row) break;
     return row[scalarKey];
+  } else if (L === 0) {
+    return null;
   } else {
     throw new Error('Expected single row, query returned multiple rows');
   }
 };
 
 
-plv8.__executeRow = function() {
+/**
+ * Executes `sql` with an `args` array, returning a single row.
+ */
+plv8.__executeRow = function(sql, args) {
   var result = plv8.execute.apply(plv8, arguments);
   var L = result.length;
-  if (L === 0)  {
-    return null;
-  } else if (L === 1) {
+  if (L === 1)  {
     return result[0];
+  } else if (L === 0) {
+    return null;
   } else {
     throw new Error('Expected single row, query returned multiple rows');
   }
 }
 
 
+/**
+ * Dumps plv8's global context.
+ */
 plv8.__dumpGlobal = function() {
-  var global = (function(){returnthis;})
   var globals = [];
-  for (var k in global) {
+  var k, global = (function(){return this;})(null);
+  for (k in global) {
     globals.push(k);
   }
   var summary = ['\n', 'Globals', '-------'].concat(globals.sort()).join('\n');
-
-  // if (global.require) {
-  //   var packages =  [];
-  //   for (var k in global.require) {
-  //     packages.push(k);
-  //   }
-  //   summary = summary.concat(['\n', 'Requirable Packages', '-------------------'].concat(packages.sort()).join('\n'));
-  // }
   plv8.elog(LOG, summary);
 }
 
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 /**
  * Gets the global context.
  */
@@ -1893,30 +1927,22 @@ exports.getGlobal = function() {
 };
 
 
-/**
- * Logs the global context and global.require.
- */
-exports.dumpGlobal = function() {
-  var global = exports.getGlobal();
+exports.extend = function(object) {
+    // Takes an unlimited number of extenders.
+    var args = Array.prototype.slice.call(arguments, 1);
 
-  var globals = [];
-  for (var k in global) {
-    globals.push(k);
-  }
-  var summary = ['\n', 'Globals', '-------'].concat(globals.sort()).join('\n');
+    // For each extender, copy their properties on our object.
+    for (var i = 0, source; source = args[i]; i++) {
+        if (!source) continue;
+        for (var property in source) {
+            object[property] = source[property];
+        }
+    }
 
-  // if (global.require) {
-  //   var packages =  [];
-  //   for (var k in global.require) {
-  //     packages.push(k);
-  //   }
-  //   summary = summary.concat(['\n', 'Requirable Packages', '-------------------'].concat(packages.sort()).join('\n'));
-  // }
-  plv8.elog(LOG, summary);
+    return object;
 };
 
-
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 //  Underscore.string
 //  (c) 2010 Esa-Matti Suuronen <esa-matti aet suuronen dot org>
 //  Underscore.string is freely distributable under the terms of the MIT license.
@@ -2591,7 +2617,7 @@ exports.dumpGlobal = function() {
   root._.string = root._.str = _s;
 }(this, String);
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var HSTORE, log, str;
 
 str = require('underscore.string');
@@ -2613,84 +2639,77 @@ module.exports = {
 };
 
 
-},{"pg-hstore":6,"plv8-mantle/logger":9,"underscore.string":18}],20:[function(require,module,exports){
+},{"pg-hstore":6,"plv8-mantle/logger":9,"underscore.string":19}],21:[function(require,module,exports){
 var example = require('./example');
 
 module.exports = {
   example: example
 };
 
-
-},{"./example":19}],21:[function(require,module,exports){
-// Adds some convenience methods to plv8, eg plv8.__executeScalar. Only needs
-// to be required once.
+},{"./example":20}],22:[function(require,module,exports){
+// Adds some convenience methods to plv8, eg plv8.__executeScalar
 require('./lib/plv8-fill');
 
-// INTENTIONAL global leak
+// INTENTIONAL global leaks
 console = require('./lib/console');
 App = require('./app');
 
 
-},{"./app":20,"./lib/console":22,"./lib/plv8-fill":23}],22:[function(require,module,exports){
+},{"./app":21,"./lib/console":23,"./lib/plv8-fill":24}],23:[function(require,module,exports){
 module.exports = require('plv8-mantle/console');
 
-},{"plv8-mantle/console":8}],23:[function(require,module,exports){
+},{"plv8-mantle/console":8}],24:[function(require,module,exports){
 module.exports = require('plv8-mantle/plv8-fill');
 
-},{"plv8-mantle/plv8-fill":16}],"LA18pb":[function(require,module,exports){
-module.exports = require('plv8-mantle/microspec');
-
-},{"plv8-mantle/microspec":11}],"./lib/spec":[function(require,module,exports){
-module.exports=require('LA18pb');
-},{}],"./lib/util":[function(require,module,exports){
-module.exports=require('rPqzDy');
-},{}],"rPqzDy":[function(require,module,exports){
-module.exports = require('plv8-mantle/util');
-
-},{"plv8-mantle/util":17}],28:[function(require,module,exports){
-var assert = require('assert');
+},{"plv8-mantle/plv8-fill":17}],25:[function(require,module,exports){
 var example = require('../app/example');
-var spec = require('../lib/spec');
-var assert = spec.assert;
-
+var spec = require('./microspec');
+var assert = require('assert');
 
 spec('hello', {
   'should enclose within Hello and !': function() {
-    assert(example.hello('World') === 'Hello World!');
+    assert.ok(example.hello('World') === 'Hello World!');
   },
 
   'should titleize': function() {
-    assert(example.hello('mario') === 'Hello Mario!');
+    assert.ok(example.hello('mario') === 'Hello Mario!');
   }
 });
 
 spec('addPerson', {
   'should return id': function() {
     var id = example.addPerson({ "firstName": "mario", "lastName": "gutierrez", "likes": ["node.js", "plv8", "postgres"], "meta": { "eyes": "brown"}});
-    assert(id > 0);
+    assert.ok(id > 0);
   }
 });
 
 spec('better assert', {
   'should fail': function() {
-    assert(3 > 5);
+    assert.ok(3 > 5);
   }
 });
 
-},{"../app/example":19,"../lib/spec":"LA18pb","assert":1}],"./test":[function(require,module,exports){
-module.exports=require('l6ZAC8');
-},{}],"l6ZAC8":[function(require,module,exports){
-var microspec = require('../lib/spec');
-var assert = microspec.assert;
-assert.SOURCE_LINE_OFFSET = 7;  // adjust for preamble lines in the source
+},{"../app/example":20,"./microspec":"kkrTCw","assert":1}],"l6ZAC8":[function(require,module,exports){
+var spec = require('./microspec');
+spec.options({
+  sourceLineOffset: 7,
+  contextLines: 2
+});
 
 exports.run = function() {
-  microspec.addGlobals(['require', 'App', 'console']);
+  spec.addGlobals(['require', 'App', 'console']);
   require('plv8-mantle/microspec/microspecSpec');
   require('./exampleSpec');
 };
 
-},{"../lib/spec":"LA18pb","./exampleSpec":28,"plv8-mantle/microspec/microspecSpec":12}]},{},[21,"l6ZAC8"])$PLV8$ LANGUAGE plv8;
+},{"./exampleSpec":25,"./microspec":"kkrTCw","plv8-mantle/microspec/microspecSpec":11}],"./test":[function(require,module,exports){
+module.exports=require('l6ZAC8');
+},{}],"./test/microspec":[function(require,module,exports){
+module.exports=require('kkrTCw');
+},{}],"kkrTCw":[function(require,module,exports){
+module.exports = require('plv8-mantle/microspec');
+
+},{"plv8-mantle/microspec":10}]},{},[22,"l6ZAC8"])$PLV8$ LANGUAGE plv8;
 
 /* TODO: add Function declarations here */
 

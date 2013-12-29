@@ -16,15 +16,13 @@ if [ "$MINIFY" = "1" ]; then
     browserify \
         -t coffeeify --extension=".coffee"  \
         -r "./test" \
-        -r "./lib/spec" \
-        -r "./lib/util" \
+        -r "./test/microspec" \
         index.js test/index.js | uglifyjs > /tmp/bundle.js
 else
     browserify \
         -t coffeeify --extension=".coffee"  \
         -r "./test" \
-        -r "./lib/spec" \
-        -r "./lib/util" \
+        -r "./test/microspec" \
         index.js test/index.js > /tmp/bundle.js
 fi
 

@@ -6,10 +6,10 @@ select plv8_startup();
 
 -- run the test
 do language plv8 $$
-  require('./lib/util').dumpGlobal();
+  plv8.__dumpGlobal();
 
-  var spec = require('./lib/spec');
-  spec.colorful(true);
+  var spec = require('./test/microspec');
+  spec.options({colorful: true});
   var test = require('./test');
   test.run();
 $$;

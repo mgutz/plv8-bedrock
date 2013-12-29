@@ -129,7 +129,6 @@ These globals are added for convenience
 
     * `./test`
     * `./lib/spec`
-    * `./lib/util`
 
     To expose more, edit `migrations/MIGRATION/prehook`. Alternatively,
     add properties classes to `App` which is a global variable. In JS and
@@ -138,10 +137,8 @@ These globals are added for convenience
     Here is an example of their use
 
         do language plv8 $$
-          require('./lib/util').dumpGlobal();
-
           var spec = require('./lib/spec');
-          spec.colorful(true);
+          spec.options({colorful: true});
           var test = require('./test');
           test.run();
         $$;
