@@ -3066,19 +3066,31 @@ module.exports = new Console(process.stdout, process.stderr);
 module.exports.Console = Console;
 
 },{"__browserify_Buffer":3,"__browserify_process":4,"assert":1,"util":6}],9:[function(require,module,exports){
-var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/console/index.js",__dirname="/../node_modules/plv8-mantle/console";process.stdout = {
-  write: function() {
-    var args = Array.prototype.slice.call(arguments);
-    args.unshift(LOG);
-    plv8.elog.apply(plv8, args);
+var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/console/index.js",__dirname="/../node_modules/plv8-mantle/console";var MAX_MSG_SIZE = 1000; // gibberish at 2009
+
+process.stdout = {
+  /**
+   * Large messages confuses logging. A messsage of 2078 was displaying random
+   * characters.
+   */
+  write: function(s) {
+    if (!s) return;
+
+    var start = 0, L = s.length;
+    while (start < L) {
+      plv8.elog(LOG, s.slice(start, start + Math.min(L - start, MAX_MSG_SIZE)));
+      start += MAX_MSG_SIZE;
+    }
   }
 };
 
 process.stderr = {
-  write: function() {
-    var args = Array.prototype.slice.call(arguments);
-    args.unshift(WARNING);
-    plv8.elog.apply(plv8, args);
+  write: function(s) {
+    var start = 0, L = s.length;
+    while (start < L) {
+      plv8.elog(WARNING, s.slice(start, start + Math.min(L - start, MAX_MSG_SIZE)));
+      start += MAX_MSG_SIZE;
+    }
   }
 };
 
@@ -3192,136 +3204,14 @@ exports.getLogger = function(name, level) {
 
 
 },{"__browserify_Buffer":3,"__browserify_process":4}],11:[function(require,module,exports){
-var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/microspec/index.js",__dirname="/../node_modules/plv8-mantle/microspec";module.exports = require('./microspec');
-
-},{"./microspec":12,"__browserify_Buffer":3,"__browserify_process":4}],12:[function(require,module,exports){
-var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/microspec/microspec.js",__dirname="/../node_modules/plv8-mantle/microspec";var options = require('./options');
+var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/microspec/index.js",__dirname="/../node_modules/plv8-mantle/microspec";var options = require('./options');
 var util = require('../util');
-var stackTrace = require('./stackTrace').stackTrace;
-var AssertionError = require('assert').AssertionError;
+var Runner = require('./runner');
 
-// these are set only if options.colorful(true) is called
-var colors, failColor, headerColor, passColor;
-var IGNORE = '#';
-var PENDING = '_';
-var ONLY = '+';
+var runner = new Runner();
+module.exports = runner.add.bind(runner);
 
-function checkGlobals(moreGlobals) {
-  var global = (function(){ return this; }).call(null);
-  var allGlobals = options.globals.concat(moreGlobals);
-  var summary = [];
-  Object.keys(global).forEach(function(p) {
-    if (allGlobals.indexOf(p) < 0) {
-      summary.push(p);
-    }
-  });
-  return summary;
-};
-
-
-module.exports = runSuite;
-
-
-function runSuite(group, opts, tests) {
-  if (group[0] === IGNORE) return;
-  if (arguments.length === 2) {
-    tests = opts;
-    opts = {};
-  }
-
-  var name, fn, total, only, message;
-  var before, after;
-  var subset = [];
-  var set = [];
-  if (typeof tests === 'function') {
-    set.push({name: '(anonymous)', fn: tests});
-  } else {
-    for (name in tests) {
-      fn = tests[name];
-      if (name === 'before') {
-        before = fn;
-      } else if (name === 'after') {
-        after = fn;
-      } else if (name[0] === ONLY) {
-        subset.push({name: name, fn: tests[name]});
-      } else if (name[0] === IGNORE) {
-        continue;
-      } else {
-        set.push({name: name, fn: tests[name]});
-      }
-    }
-  }
-
-  var ran = 0, pending = 0;
-
-  if (subset.length > 0) set = subset;
-  var pendingGroup;
-  if (group[0] === PENDING) {
-    pendingGroup = true;
-    group = '(PENDING) ' + group.slice(1);
-  }
-
-  var summary = ['', options.colorful ?  headerColor(group) : group];
-
-  if (pendingGroup) {
-    console.log(summary.join('\n'));
-    return;
-  }
-
-  try {
-    if (before) before();
-    var i, test, testCase;
-    for (i = 0; i < set.length; i++) {
-      test = set[i];
-      name = test.name;
-      testCase = test.fn;
-      if (name[0] === PENDING) {
-        summary.push('  - (PENDING) ' + name.slice(1));
-        pending += 1;
-      } else if (name[0] === ONLY) {
-        summary.push('  - ' + name.slice(1));
-        testCase();
-        ran += 1;
-      } else {
-        summary.push('  - ' + name);
-        testCase();
-        ran += 1;
-      }
-
-      if (options.colorful) {
-        var last = summary[summary.length - 1];
-        summary[summary.length-1] = passColor(last);
-      }
-    }
-    if (after) after();
-
-    message = '  ran ' + ran + ' specs';
-    if (pending > 0) message += ' (' + pending + ' pending)';
-    summary.push(message);
-
-    var leaks = checkGlobals(opts.globals);
-    if (leaks.length > 0) {
-      leaks = '\nGlobal variable leaks: ' + leaks.join(', ');
-      summary.push(options.colorful ? failColor(leaks) : leaks);
-    }
-  } catch(e) {
-    if (e.stack) {
-      message = stackTrace(e.stack).message;
-    } else {
-      message = e.message;
-    }
-
-    if (options.colorful) {
-      var last = summary[summary.length - 1];
-      summary[summary.length-1] = failColor(last);
-      summary.push(failColor(message));
-    } else {
-      summary.push(message);
-    }
-  }
-
-  console.log(summary.join('\n'));
-};
+module.exports.run = runner.run.bind(runner);
 
 /**
  * Add global var exclusions, used by `checkGlobals`
@@ -3337,111 +3227,17 @@ module.exports.options = function(opts) {
   if (arguments.length === 1) {
     util.extend(options, opts);
     if (options.colorful) {
-      colors = require('mgutz-colors');
-      passColor = colors.fn('green');
-      failColor = colors.fn('red');
-      headerColor = colors.fn('cyan');
+      var colors = require('mgutz-colors');
+      options.passColor = colors.fn('green');
+      options.failColor = colors.fn('red');
+      options.headerColor = colors.fn('cyan');
     }
   } else {
     return options;
   }
 }
 
-
-},{"../util":19,"./options":14,"./stackTrace":15,"__browserify_Buffer":3,"__browserify_process":4,"assert":1,"mgutz-colors":16}],13:[function(require,module,exports){
-var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/microspec/microspecSpec.js",__dirname="/../node_modules/plv8-mantle/microspec";var assert = require('assert');
-var spec = require('../microspec');
-
-var ran = 0;
-spec('microspec', {
-
-  before: function() {
-    ran++;
-  },
-
-  'should pass': function() {
-    assert.ok(true);
-    ran++;
-  },
-
-  '_should be pending': function() {
-    // should not run
-    ran++;
-  },
-
-  '#should be ignored': function() {
-    // should not run
-    ran++;
-  },
-
-  after: function() {
-    assert.ok(ran === 3);
-  },
-
-  'should have run': function() {
-    ran++;
-  }
-});
-
-ran = 0;
-spec('microspec - subset marked with "+"', {
-  before: function() {
-    ran++;
-  },
-
-  '+should pass': function() {
-    assert.ok(true);
-    ran++;
-  },
-
-  '_should be pending': function() {
-    // should not run
-    ran++;
-  },
-
-  '#should be ignored': function() {
-    // should not run
-    ran++;
-  },
-
-  after: function() {
-    assert.ok(ran === 2);
-  },
-
-  'should have run': function() {
-    ran++;
-  }
-});
-
-
-spec('microspec - intentional errors', {
-  'should catch global var leak': function() {
-    spec('global var leak',  function() {
-      badvar = 100;
-    });
-    // delete bad var from above for other tests
-    var global = (function() { return this; })(null);
-    delete global.badvar;
-  },
-
-  'should fail': function() {
-    assert.ok("hello" === "yello");
-  },
-});
-
-spec('_microspec - entire spec is pending', {
-  'should fail': function() {
-    assert.ok(false);
-  }
-});
-
-spec('#microspec - entire spec is ignored', {
-  'should fail': function() {
-    assert.ok(false);
-  }
-});
-
-},{"../microspec":11,"__browserify_Buffer":3,"__browserify_process":4,"assert":1}],14:[function(require,module,exports){
+},{"../util":19,"./options":12,"./runner":13,"__browserify_Buffer":3,"__browserify_process":4,"mgutz-colors":16}],12:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/microspec/options.js",__dirname="/../node_modules/plv8-mantle/microspec";module.exports = {
   // known globals used to determin leaks
   globals: [
@@ -3471,11 +3267,57 @@ var process=require("__browserify_process"),global=typeof self !== "undefined" ?
 };
 
 
-},{"__browserify_Buffer":3,"__browserify_process":4}],15:[function(require,module,exports){
+},{"__browserify_Buffer":3,"__browserify_process":4}],13:[function(require,module,exports){
+var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/microspec/runner.js",__dirname="/../node_modules/plv8-mantle/microspec";var suite = require('./suite');
+var IGNORE = '#';
+var PENDING = '_';
+var ONLY = '+';
+var Nimble = require('../vendor/nimble');
+
+function Runner(suites) {
+  this.suites = [];
+}
+
+Runner.prototype.add = function(name) {
+  this.suites.push({ name: name, args: Array.prototype.slice.apply(arguments)});
+  return this;
+};
+
+Runner.prototype.run = function() {
+  var i, testSuite;
+  var set = [];
+  var subset = [];
+  for (i = 0; i < this.suites.length; i++) {
+    testSuite = this.suites[i];
+    var name = testSuite.name;
+    if (name[0] === ONLY) {
+      subset.push(testSuite);
+    } else {
+      set.push(testSuite);
+    }
+  }
+
+  if (subset.length > 0) {
+    set = subset;
+  }
+
+  Nimble.eachSeries(set, function(testSuite, cb) {
+    testSuite.args.push(cb);
+    suite.run.apply(suite, testSuite.args);
+  }, function(err) {
+    if (err) console.log(err.toString());
+  });
+};
+
+
+module.exports = Runner;
+
+},{"../vendor/nimble":20,"./suite":15,"__browserify_Buffer":3,"__browserify_process":4}],14:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/microspec/stackTrace.js",__dirname="/../node_modules/plv8-mantle/microspec";/**
  * Module dependencies.
  */
 var options = require('./options');
+var isPlv8 = typeof plv8 !== 'undefined';
 
 /**
  * Expose `assert`.
@@ -3497,8 +3339,8 @@ function parseStack(stack) {
       result.push({
         location: matches[1].trim(),
         filename: matches[2],
-        lineno: matches[3],
-        colno: matches[4]
+        lineno: parseInt(matches[3], 10),
+        colno: parseInt(matches[4], 10)
       })
     }
   }
@@ -3522,8 +3364,8 @@ function get__filename(lineno, defaultValue) {
 }
 
 
-function getCodeContext(lineno, n) {
-  var codeLines = loadCodeLines();
+function getCodeContext(filename, lineno, colno, n) {
+  var codeLines = loadCodeLines(filename);
   var i, line, msg = "";
   var start = Math.max(0, lineno - n);
   //var end = Math.min(lineno + n, codeLines.length);
@@ -3539,12 +3381,15 @@ function getCodeContext(lineno, n) {
   return msg;
 }
 
-function loadCodeLines() {
-  if (!codeLines) {
-    var code = plv8.__executeScalar("select code from plv8_sources where filename = 'plv8_startup'");
-    codeLines = code.split('\n');
+function loadCodeLines(filename) {
+  if (isPlv8) {
+    if (!codeLines) {
+      var code = plv8.__executeScalar("select code from plv8_sources where filename = 'plv8_startup'");
+      codeLines = code.split('\n');
+    }
+    return codeLines;
   }
-  return codeLines;
+  return null;
 }
 
 /**
@@ -3552,36 +3397,33 @@ function loadCodeLines() {
  */
 exports.stackTrace = function stackTrace(istack) {
   var stack = parseStack(istack);
-  var codeLines = loadCodeLines();
-  if (codeLines) {
-    var addLine, filename, line, call, msg = '';
-    for (var i = 0, L = stack.length; i < L; i++) {
-      call = stack[i];
-      msg += '\n';
+  console.dir(stack);
+  var addLine, filename, call, msg = '';
+  for (var i = 0, L = stack.length; i < L; i++) {
+    call = stack[i];
+    msg += '\n';
 
-      if (call.filename === '<anonymous>') {
-        // ignore
-      } else if (call.location) {
-        var lineno = call.lineno - options.sourceLineOffset;
-        if (lineno < 1) continue;
-        line = codeLines[lineno];
+    if (call.filename === '<anonymous>') {
+      // ignore
+    } else if (call.location) {
+      var lineno = (isPlv8) ? call.lineno  - options.sourceLineOffset : call.lineno;
+      if (lineno < 1) continue;
 
-        filename = get__filename(lineno, call.filename);
-        msg += '  ' + call.location + ' (' + filename + ':' + call.lineno + ':' + call.colno + ')';
+      //line = codeLines[lineno];
+      filename = get__filename(lineno, call.filename);
 
-        var codeContext = getCodeContext(lineno, options.contextLines);
-        if (codeContext) {
-          msg += '\n';
-          msg += codeContext;
-        }
-      } else {
-        msg += call;
+      msg += '  ' + call.location + ' (' + filename + ':' + call.lineno + ':' + call.colno + ')';
+      var codeContext = getCodeContext(filename, lineno, call.colno, options.contextLines);
+      if (codeContext) {
+        msg += '\n';
+        msg += codeContext;
       }
+    } else {
+      msg += call;
     }
-  } else {
-    msg = 'Could not load code from plv8_sources table';
   }
 
+  //console.log('msg', msg);
   return { stack: stack, message: msg };
 }
 
@@ -3596,13 +3438,177 @@ function dumpSource(lineno, contextLines) {
   var message = '\nFilename: ' + filename + '\n' + code;
   console.log(message);
 }
+
 exports.dumpSource = dumpSource;
 
-plv8.__dumpSource = dumpSource;
+if (isPlv8) {
+  plv8.__dumpSource = dumpSource;
+}
 
 
 
-},{"./options":14,"__browserify_Buffer":3,"__browserify_process":4}],16:[function(require,module,exports){
+},{"./options":12,"__browserify_Buffer":3,"__browserify_process":4}],15:[function(require,module,exports){
+var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/microspec/suite.js",__dirname="/../node_modules/plv8-mantle/microspec";var options = require('./options');
+var util = require('../util');
+var stackTrace = require('./stackTrace').stackTrace;
+var AssertionError = require('assert').AssertionError;
+var Nimble = require('../vendor/nimble');
+
+// these are set only if options.colorful(true) is called
+var IGNORE = '#';
+var PENDING = '_';
+var ONLY = '+';
+var runner = require('./runner');
+
+function checkGlobals(moreGlobals) {
+  var global = (function(){ return this; }).call(null);
+  var allGlobals = options.globals.concat(moreGlobals);
+  var summary = [];
+  Object.keys(global).forEach(function(p) {
+    if (allGlobals.indexOf(p) < 0) {
+      summary.push(p);
+    }
+  });
+  return summary;
+};
+
+function gatherTestCases(tests) {
+  var name, fn;
+  var before, after;
+  var subset = [];
+  var set = [];
+  if (typeof tests === 'function') {
+    set.push({name: '(anonymous)', fn: tests});
+  } else {
+    for (name in tests) {
+      fn = tests[name];
+      if (name === 'before') {
+        before = fn;
+      } else if (name === 'after') {
+        after = fn;
+      } else if (name[0] === ONLY) {
+        subset.push({name: name, fn: tests[name]});
+      } else if (name[0] === IGNORE) {
+        continue;
+      } else {
+        set.push({name: name, fn: tests[name]});
+      }
+    }
+  }
+
+  if (subset.length > 0) set = subset;
+  if (before) {
+    set.unshift({name: 'before', fn: before});
+  }
+  if (after) {
+    set.push({name: 'after', fn: after});
+  }
+  return set;
+}
+
+exports.run = function(group, tests, cb) {
+  if (group[0] === IGNORE) return;
+  var opts = {};
+  var pendingGroup;
+  if (group[0] === PENDING) {
+    pendingGroup = true;
+    group = '(PENDING) ' + group.slice(1);
+  }
+
+  var summary = ['', options.colorful ?  options.headerColor(group) : group];
+
+  if (pendingGroup) {
+    console.log(summary.join('\n'));
+    return;
+  }
+
+  var set = gatherTestCases(tests);
+  var ran = 0, pending = 0, name, message;
+
+  Nimble.eachSeries(set, function(test, cb) {
+    function next(fn) {
+      function done(err) {
+        if (err) return cb(err);
+        if (options.colorful) {
+          var last = summary[summary.length - 1];
+          summary[summary.length-1] = options.passColor(last);
+        }
+        cb();
+      }
+      if (fn) {
+        try {
+          if (fn.length === 1) {
+            fn(done);
+          } else {
+            fn();
+            done();
+          }
+        } catch(e) {
+          done(e);
+        }
+      } else {
+        done();
+      }
+    }
+
+    name = test.name;
+    var testCase = test.fn;
+    if (name[0] === PENDING) {
+      summary.push('  - (PENDING) ' + name.slice(1));
+      pending += 1;
+      next();
+    } else if (!testCase) {
+      summary.push('  - (PENDING) ' + name);
+      pending += 1;
+      next();
+    } else if (name[0] === ONLY) {
+      summary.push('  - ' + name.slice(1));
+      ran += 1;
+      next(testCase);
+    } else if (name === 'before' || name === 'after') {
+      next(testCase);
+    } else {
+      summary.push('  - ' + name);
+      ran += 1;
+      next(testCase);
+    }
+
+  }, function(err) {
+    if (err) {
+      if (err.stack) {
+        message = stackTrace(err.stack).message;
+      } else {
+        message = err.toString();
+      }
+
+      if (options.colorful) {
+        var last = summary[summary.length - 1];
+        summary[summary.length-1] = options.failColor(last);
+        summary.push(options.failColor(message));
+      } else {
+        summary.push(message);
+      }
+    } else {
+      message = '  ran ' + ran + ' specs';
+      if (pending > 0) message += ' (' + pending + ' pending)';
+      summary.push(message);
+
+      var leaks = checkGlobals(opts.globals);
+      if (leaks.length > 0) {
+        leaks = '\nGlobal variable leaks: ' + leaks.join(', ');
+        summary.push(options.colorful ? options.failColor(leaks) : leaks);
+      }
+    }
+    console.log(summary.join('\n'));
+    cb();
+  });
+
+};
+
+
+
+
+},{"../util":19,"../vendor/nimble":20,"./options":12,"./runner":13,"./stackTrace":14,"__browserify_Buffer":3,"__browserify_process":4,"assert":1}],16:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/node_modules/mgutz-colors/index.js",__dirname="/../node_modules/plv8-mantle/node_modules/mgutz-colors";/*============================================================================
  * Copyright(c) 2010 Mario L Gutierrez <mario@mgutz.com>
  * MIT Licensed
@@ -3743,12 +3749,40 @@ var process=require("__browserify_process"),global=typeof self !== "undefined" ?
  * to reduce possibility of conflict.
  */
 
+/**
+ * Trace SQL queries if client_min_messages starts with 'debug'.
+ */
+var DEBUG;
+(function() {
+  var rows = plv8.execute("select setting from pg_settings where name='client_min_messages'");
+  DEBUG = rows[0].setting.indexOf('debug') === 0;
+})();
+
+
+
+/**
+ * Wraps logging around plv8.execute.
+ *
+ * client_min_messages must be {debug1, ..., debug5}
+ */
+function __execute(sql, args) {
+  if (DEBUG) {
+    console.log('plv8.__execute\n', sql , args ? args : '');
+  }
+
+  return plv8.execute.apply(plv8, arguments);
+};
+
+plv8.__execute = __execute;
+plv8.__executeRows = __execute;
+
 
 /**
  * Executes `sql` with an `args` array, returning a scalar value.
  */
 plv8.__executeScalar = function(sql, args) {
-  var result = plv8.execute.apply(plv8, arguments);
+  //var result = plv8.execute.apply(plv8, arguments);
+  var result = __execute.apply(null, arguments);
   var L = result.length;
   if (L === 1)  {
     var row = result[0];
@@ -3766,7 +3800,7 @@ plv8.__executeScalar = function(sql, args) {
  * Executes `sql` with an `args` array, returning a single row.
  */
 plv8.__executeRow = function(sql, args) {
-  var result = plv8.execute.apply(plv8, arguments);
+  var result = __execute.apply(null, arguments);
   var L = result.length;
   if (L === 1)  {
     return result[0];
@@ -3774,6 +3808,19 @@ plv8.__executeRow = function(sql, args) {
     return null;
   } else {
     throw new Error('Expected single row, query returned multiple rows');
+  }
+}
+
+
+/**
+ * Executes a command which returns the affected records like an update.
+ */
+plv8.__executeCommand = function(sql, args) {
+  var result = __execute.apply(null, arguments);
+  if (typeof result === 'number') {
+    return result;
+  } else {
+    throw new Error('Expected single number value of records affected');
   }
 }
 
@@ -3821,7 +3868,231 @@ exports.extend = function(object) {
     return object;
 };
 
+
 },{"__browserify_Buffer":3,"__browserify_process":4}],20:[function(require,module,exports){
+var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/plv8-mantle/vendor/nimble.js",__dirname="/../node_modules/plv8-mantle/vendor";/**
+ * Nimble
+ * Copyright (c) 2011 Caolan McMahon
+ *
+ * Nimble is freely distributable under the MIT license.
+ *
+ * This source code is optimized for minification and gzip compression, not
+ * readability. If you want reassurance, see the test suite.
+ */
+
+var keys = Object.keys;
+
+var fallback = function (name, fallback) {
+    var nativeFn = Array.prototype[name];
+    return function (obj, iterator, memo) {
+        var fn = obj ? obj[name]: 0;
+        return fn && fn === nativeFn ?
+            fn.call(obj, iterator, memo):
+            fallback(obj, iterator, memo);
+    };
+};
+
+var eachSync = fallback('forEach', function (obj, iterator) {
+    var isObj = obj instanceof Object;
+    var arr = isObj ? keys(obj): (obj || []);
+    for (var i = 0, len = arr.length; i < len; i++) {
+        var k = isObj ? arr[i]: i;
+        iterator(obj[k], k, obj);
+    }
+});
+
+var eachParallel = function (obj, iterator, callback) {
+    var len = obj.length || keys(obj).length;
+    if (!len) {
+        return callback();
+    }
+    var completed = 0;
+    eachSync(obj, function () {
+        var cb = function (err) {
+            if (err) {
+                callback(err);
+                callback = function () {};
+            }
+            else {
+                if (++completed === len) {
+                    callback();
+                }
+            }
+        };
+        var args = Array.prototype.slice.call(arguments);
+        if (iterator.length) {
+            args = args.slice(0, iterator.length - 1);
+            args[iterator.length - 1] = cb;
+        }
+        else {
+            args.push(cb);
+        }
+        iterator.apply(this, args);
+    });
+};
+
+var eachSeries = function (obj, iterator, callback) {
+    var keys_list = keys(obj);
+    if (!keys_list.length) {
+        return callback();
+    }
+    var completed = 0;
+    var iterate = function () {
+        var k = keys_list[completed];
+        var args = [obj[k], k, obj].slice(0, iterator.length - 1);
+        args[iterator.length - 1] = function (err) {
+            if (err) {
+                callback(err);
+                callback = function () {};
+            }
+            else {
+                if (++completed === keys_list.length) {
+                    callback();
+                }
+                else {
+                    iterate();
+                }
+            }
+        };
+        iterator.apply(this, args);
+    };
+    iterate();
+};
+
+var mapSync = fallback('map', function (obj, iterator) {
+    var results = [];
+    eachSync(obj, function (v, k, obj) {
+        results[results.length] = iterator(v, k, obj);
+    });
+    return results;
+});
+
+var mapAsync = function (eachfn) {
+    return function (obj, iterator, callback) {
+        var results = [];
+        eachfn(obj, function (value, i, obj, callback) {
+            var cb = function (err, v) {
+                results[results.length] = v;
+                callback(err);
+            };
+            var args = [value, i, obj];
+            if (iterator.length) {
+                args = args.slice(0, iterator.length - 1);
+                args[iterator.length - 1] = cb;
+            }
+            else {
+                args.push(cb);
+            }
+            iterator.apply(this, args);
+        }, function (err) {
+            callback(err, results);
+        });
+    };
+};
+
+var filterSync = fallback('filter', function (obj, iterator, callback) {
+    var results = [];
+    eachSync(obj, function (v, k, obj) {
+        if (iterator(v, k, obj)) {
+            results[results.length] = v;
+        }
+    });
+    return results;
+});
+
+var filterParallel = function (obj, iterator, callback) {
+    var results = [];
+    eachParallel(obj, function (value, k, obj, callback) {
+        var cb = function (err, a) {
+            if (a) {
+                results[results.length] = value;
+            }
+            callback(err);
+        };
+        var args = [value, k, obj];
+        if (iterator.length) {
+            args = args.slice(0, iterator.length - 1);
+            args[iterator.length - 1] = cb;
+        }
+        else {
+            args.push(cb);
+        }
+        iterator.apply(this, args);
+    }, function (err) {
+        callback(err, results);
+    });
+};
+
+var reduceSync = fallback('reduce', function (obj, iterator, memo) {
+    eachSync(obj, function (v, i, obj) {
+        memo = iterator(memo, v, i, obj);
+    });
+    return memo;
+});
+
+var reduceSeries = function (obj, iterator, memo, callback) {
+    eachSeries(obj, function (value, i, obj, callback) {
+        var cb = function (err, v) {
+            memo = v;
+            callback(err);
+        };
+        var args = [memo, value, i, obj];
+        if (iterator.length) {
+            args = args.slice(0, iterator.length - 1);
+            args[iterator.length - 1] = cb;
+        }
+        else {
+            args.push(cb);
+        }
+        iterator.apply(this, args);
+    }, function (err) {
+        callback(err, memo);
+    });
+};
+
+exports.each = function (obj, iterator, callback) {
+    return (callback ? eachParallel: eachSync)(obj, iterator, callback);
+};
+exports.map = function (obj, iterator, callback) {
+    return (callback ? mapAsync(eachParallel): mapSync)(obj, iterator, callback);
+};
+exports.filter = function (obj, iterator, callback) {
+    return (callback ? filterParallel: filterSync)(obj, iterator, callback);
+};
+exports.reduce = function (obj, iterator, memo, callback) {
+    return (callback ? reduceSeries: reduceSync)(obj, iterator, memo, callback);
+};
+
+
+exports.eachSeries = eachSeries;
+
+exports.parallel = function (fns, callback) {
+    var results = new fns.constructor();
+    eachParallel(fns, function (fn, k, cb) {
+        fn(function (err) {
+            var v = Array.prototype.slice.call(arguments, 1);
+            results[k] = v.length <= 1 ? v[0]: v;
+            cb(err);
+        });
+    }, function (err) {
+        (callback || function () {})(err, results);
+    });
+};
+
+exports.series = function (fns, callback) {
+    var results = new fns.constructor();
+    eachSeries(fns, function (fn, k, cb) {
+        fn(function (err, result) {
+            var v = Array.prototype.slice.call(arguments, 1);
+            results[k] = v.length <= 1 ? v[0]: v;
+            cb(err);
+        });
+    }, function (err) {
+        (callback || function () {})(err, results);
+    });
+};
+
+},{"__browserify_Buffer":3,"__browserify_process":4}],21:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/../node_modules/underscore.string/lib/underscore.string.js",__dirname="/../node_modules/underscore.string/lib";//  Underscore.string
 //  (c) 2010 Esa-Matti Suuronen <esa-matti aet suuronen dot org>
 //  Underscore.string is freely distributable under the terms of the MIT license.
@@ -4496,7 +4767,7 @@ var process=require("__browserify_process"),global=typeof self !== "undefined" ?
   root._.string = root._.str = _s;
 }(this, String);
 
-},{"__browserify_Buffer":3,"__browserify_process":4}],21:[function(require,module,exports){
+},{"__browserify_Buffer":3,"__browserify_process":4}],22:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/app/example.coffee",__dirname="/app";var HSTORE, log, str;
 
 str = require('underscore.string');
@@ -4518,14 +4789,14 @@ module.exports = {
 };
 
 
-},{"__browserify_Buffer":3,"__browserify_process":4,"pg-hstore":7,"plv8-mantle/logger":10,"underscore.string":20}],22:[function(require,module,exports){
+},{"__browserify_Buffer":3,"__browserify_process":4,"pg-hstore":7,"plv8-mantle/logger":10,"underscore.string":21}],23:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/app/index.js",__dirname="/app";var example = require('./example');
 
 module.exports = {
   example: example
 };
 
-},{"./example":21,"__browserify_Buffer":3,"__browserify_process":4}],23:[function(require,module,exports){
+},{"./example":22,"__browserify_Buffer":3,"__browserify_process":4}],24:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/index.js",__dirname="/";// Adds some convenience methods to plv8, eg plv8.__executeScalar
 require('./lib/plv8-fill');
 
@@ -4534,13 +4805,13 @@ console = require('./lib/console');
 App = require('./app');
 
 
-},{"./app":22,"./lib/console":24,"./lib/plv8-fill":25,"__browserify_Buffer":3,"__browserify_process":4}],24:[function(require,module,exports){
+},{"./app":23,"./lib/console":25,"./lib/plv8-fill":26,"__browserify_Buffer":3,"__browserify_process":4}],25:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/lib/console.js",__dirname="/lib";module.exports = require('plv8-mantle/console');
 
-},{"__browserify_Buffer":3,"__browserify_process":4,"plv8-mantle/console":9}],25:[function(require,module,exports){
+},{"__browserify_Buffer":3,"__browserify_process":4,"plv8-mantle/console":9}],26:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/lib/plv8-fill.js",__dirname="/lib";module.exports = require('plv8-mantle/plv8-fill');
 
-},{"__browserify_Buffer":3,"__browserify_process":4,"plv8-mantle/plv8-fill":18}],26:[function(require,module,exports){
+},{"__browserify_Buffer":3,"__browserify_process":4,"plv8-mantle/plv8-fill":18}],27:[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/test/exampleSpec.js",__dirname="/test";var example = require('../app/example');
 var spec = require('./microspec');
 var assert = require('assert');
@@ -4568,27 +4839,27 @@ spec('better assert', {
   }
 });
 
-},{"../app/example":21,"./microspec":"kkrTCw","__browserify_Buffer":3,"__browserify_process":4,"assert":1}],"./test":[function(require,module,exports){
+},{"../app/example":22,"./microspec":"kkrTCw","__browserify_Buffer":3,"__browserify_process":4,"assert":1}],"./test":[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/test/index.js",__dirname="/test";module.exports=require('l6ZAC8');
 },{"__browserify_Buffer":3,"__browserify_process":4}],"l6ZAC8":[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/test/index.js",__dirname="/test";var spec = require('./microspec');
 spec.options({
   sourceLineOffset: 7,
-  contextLines: 3
+  contextLines: 5
 });
 
 exports.run = function() {
   spec.addGlobals(['require', 'App', 'console']);
-  require('plv8-mantle/microspec/microspecSpec');
   require('./exampleSpec');
+  spec.run();
 };
 
-},{"./exampleSpec":26,"./microspec":"kkrTCw","__browserify_Buffer":3,"__browserify_process":4,"plv8-mantle/microspec/microspecSpec":13}],"./test/microspec":[function(require,module,exports){
+},{"./exampleSpec":27,"./microspec":"kkrTCw","__browserify_Buffer":3,"__browserify_process":4}],"./test/microspec":[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/test/microspec.js",__dirname="/test";module.exports=require('kkrTCw');
 },{"__browserify_Buffer":3,"__browserify_process":4}],"kkrTCw":[function(require,module,exports){
 var process=require("__browserify_process"),global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},Buffer=require("__browserify_Buffer"),__filename="/test/microspec.js",__dirname="/test";module.exports = require('plv8-mantle/microspec');
 
-},{"__browserify_Buffer":3,"__browserify_process":4,"plv8-mantle/microspec":11}]},{},[23,"l6ZAC8"])$PLV8$ LANGUAGE plv8;
+},{"__browserify_Buffer":3,"__browserify_process":4,"plv8-mantle/microspec":11}]},{},[24,"l6ZAC8"])$PLV8$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION plv8_source(lineno integer) RETURNS void AS $$
   // REMEMBER all argument names are converted to lowercase unless quoted.
